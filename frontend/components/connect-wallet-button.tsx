@@ -10,23 +10,23 @@ export const ConnectWalletButton = () => {
   if (isConnected && address) {
     return (
       <button
-        className="rounded-md bg-[hsl(var(--accent))] px-4 py-2 text-sm font-semibold text-white"
+        className="btn-secondary px-4 py-2 text-sm"
         onClick={() => disconnect()}
         type="button"
       >
-        {`${address.slice(0, 6)}...${address.slice(-4)}`}
+        {`${address.slice(0, 6)}...${address.slice(-4)} · Disconnect`}
       </button>
     );
   }
 
-  const connector = connectors[0];
+  const connector = connectors.find((item) => item.type === "injected") ?? connectors[0];
   if (!connector) {
-    return <span className="text-sm">No wallet connector detected</span>;
+    return <span className="text-sm subtle-text">No wallet connector detected</span>;
   }
 
   return (
     <button
-      className="rounded-md bg-[hsl(var(--accent))] px-4 py-2 text-sm font-semibold text-white"
+      className="btn-primary px-4 py-2 text-sm"
       disabled={isPending}
       onClick={() => connect({ connector })}
       type="button"

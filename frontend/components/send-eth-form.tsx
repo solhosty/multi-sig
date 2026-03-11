@@ -34,22 +34,22 @@ export const SendEthForm = ({ walletAddress }: Props) => {
   };
 
   return (
-    <form className="panel space-y-3 p-4" onSubmit={onSubmit}>
+    <form className="panel space-y-3 p-4 md:p-5" onSubmit={onSubmit}>
       <h3 className="text-sm font-semibold uppercase tracking-wide">Propose ETH Send</h3>
       <input
-        className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent p-2 text-sm"
+        className="input-base"
         onChange={(event) => setRecipient(event.target.value)}
         placeholder="Recipient address"
         value={recipient}
       />
       <input
-        className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent p-2 text-sm"
+        className="input-base"
         onChange={(event) => setAmount(event.target.value)}
         placeholder="Amount in ETH"
         value={amount}
       />
       <button
-        className="rounded-md bg-[hsl(var(--accent))] px-3 py-2 text-sm font-semibold text-white"
+        className="btn-primary px-3 py-2 text-sm"
         disabled={isPending}
         type="submit"
       >

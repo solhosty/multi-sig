@@ -29,9 +29,13 @@ export const TransactionSigners = ({ walletAddress, owners, txId }: Props) => {
       {owners.map((owner, index) => {
         const isSigned = signatures.data?.[index]?.status === "success" && signatures.data[index].result;
         return (
-          <div className="flex items-center justify-between" key={owner}>
-            <span className="font-mono">{owner}</span>
-            <span className={isSigned ? "text-emerald-600" : "text-slate-500"}>
+          <div className="surface-muted flex items-center justify-between px-3 py-2" key={owner}>
+            <span className="font-mono text-[11px]">{owner}</span>
+            <span
+              className={
+                isSigned ? "text-[hsl(var(--success))]" : "text-[hsl(var(--muted-foreground))]"
+              }
+            >
               {isSigned ? "signed" : "waiting"}
             </span>
           </div>

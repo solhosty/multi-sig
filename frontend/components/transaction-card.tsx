@@ -18,33 +18,34 @@ type Props = {
 export const TransactionCard = ({ tx, walletAddress, owners, threshold }: Props) => {
   const { execute, sign, isPending } = useMultisigActions(walletAddress);
   const canExecute = tx.signatureCount >= threshold && !tx.executed;
+  const statusClass = tx.executed
+    ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
+    : "bg-[hsl(var(--warning))]/14 text-[hsl(var(--warning))]";
 
   return (
-    <article className="panel space-y-3 p-4">
+    <article className="panel space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">Transaction #{tx.id.toString()}</h4>
-        <span
-          className={`rounded-full px-2 py-1 text-xs ${
-            tx.executed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-          }`}
-        >
+        <span className={`rounded-full px-2 py-1 text-xs ${statusClass}`}>
           {tx.executed ? "executed" : "pending"}
         </span>
       </div>
 
-      <div className="space-y-1 text-xs">
-        <p>
+      <div className="surface-muted space-y-1 p-3 text-xs">
+        <p className="break-all">
           To: <span className="font-mono">{tx.to}</span>
         </p>
         <p>Value: {tx.value.toString()} wei</p>
-        <p>Signatures: {tx.signatureCount.toString()} / {threshold.toString()}</p>
+        <p>
+          Signatures: {tx.signatureCount.toString()} / {threshold.toString()}
+        </p>
       </div>
 
       <TransactionSigners owners={owners} txId={tx.id} walletAddress={walletAddress} />
 
       <div className="flex flex-wrap gap-2">
         <button
-          className="rounded-md border border-[hsl(var(--border))] px-3 py-1 text-xs"
+          className="btn-secondary px-3 py-2 text-xs"
           disabled={isPending || tx.executed}
           onClick={async () => {
             try {
@@ -64,7 +65,7 @@ export const TransactionCard = ({ tx, walletAddress, owners, threshold }: Props)
           Sign
         </button>
         <button
-          className="rounded-md bg-[hsl(var(--accent))] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+          className="btn-primary px-3 py-2 text-xs disabled:opacity-60"
           disabled={isPending || !canExecute}
           onClick={async () => {
             try {

@@ -23,6 +23,29 @@ export const useFactory = () => {
     }
   });
 
+  const ownerWallets = useReadContract({
+    abi: factoryAbi,
+    address: contractConfig.factoryAddress,
+    functionName: "getWalletsByOwner",
+    args: address ? [address] : undefined,
+    query: {
+      enabled: canRead && Boolean(address),
+      refetchInterval: 5_000
+    }
+  });
+
+  const ownedWallets = useMemo(() => {
+    const normalized = new Map<string, `0x${string}`>();
+    const ownerList = (ownerWallets.data ?? []) as `0x${string}`[];
+    const creatorList = (creatorWallets.data ?? []) as `0x${string}`[];
+
+    for (const wallet of [...ownerList, ...creatorList]) {
+      normalized.set(wallet.toLowerCase(), wallet);
+    }
+
+    return Array.from(normalized.values());
+  }, [creatorWallets.data, ownerWallets.data]);
+
   const createWallet = async (owners: `0x${string}`[], threshold: bigint) => {
     if (!contractConfig.factoryAddress) {
       throw new Error("Factory address is not configured");
@@ -39,6 +62,9 @@ export const useFactory = () => {
   return {
     createWallet,
     creatorWallets,
+    ownerWallets,
+    ownedWallets,
+    isLoadingWallets: creatorWallets.isLoading || ownerWallets.isLoading,
     isCreating: isPending
   };
 };
