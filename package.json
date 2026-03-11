@@ -1,0 +1,19 @@
+{
+  "name": "multi-sig-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.6.2",
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "lint": "pnpm --filter frontend lint",
+    "typecheck": "pnpm --filter frontend typecheck",
+    "test:contracts": "forge test",
+    "build:contracts": "forge build",
+    "deploy:sepolia": "forge script contracts/script/Deploy.s.sol:DeployScript --rpc-url $SEPOLIA_RPC_URL --broadcast --verify"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3"
+  }
+}
