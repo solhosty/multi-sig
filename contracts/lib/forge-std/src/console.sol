@@ -3,11 +3,14 @@ pragma solidity >=0.8.13 <0.9.0;
 
 library console {
     address constant CONSOLE_ADDRESS = 0x000000000000000000636F6e736F6c652e6c6f67;
+    uint256 constant MAX_LOG_STRING = 4096;
 
     function _sendLogPayloadImplementation(bytes memory payload) internal view {
         address consoleAddress = CONSOLE_ADDRESS;
         assembly ("memory-safe") {
-            pop(staticcall(gas(), consoleAddress, add(payload, 32), mload(payload), 0, 0))
+            if gt(extcodesize(consoleAddress), 0) {
+                pop(staticcall(gas(), consoleAddress, add(payload, 32), mload(payload), 0, 0))
+            }
         }
     }
 
@@ -25,6 +28,10 @@ library console {
         _castToPure(_sendLogPayloadImplementation)(payload);
     }
 
+    function _assertLogStringLength(string memory value) private pure {
+        require(bytes(value).length <= MAX_LOG_STRING, "console string too long");
+    }
+
     function log() internal pure {
         _sendLogPayload(abi.encodeWithSignature("log()"));
     }
@@ -38,6 +45,7 @@ library console {
     }
 
     function logString(string memory p0) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string)", p0));
     }
 
@@ -190,6 +198,7 @@ library console {
     }
 
     function log(string memory p0) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string)", p0));
     }
 
@@ -206,6 +215,7 @@ library console {
     }
 
     function log(uint256 p0, string memory p1) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string)", p0, p1));
     }
 
@@ -218,22 +228,28 @@ library console {
     }
 
     function log(string memory p0, uint256 p1) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256)", p0, p1));
     }
 
     function log(string memory p0, int256 p1) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,int256)", p0, p1));
     }
 
     function log(string memory p0, string memory p1) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string)", p0, p1));
     }
 
     function log(string memory p0, bool p1) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool)", p0, p1));
     }
 
     function log(string memory p0, address p1) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address)", p0, p1));
     }
 
@@ -242,6 +258,7 @@ library console {
     }
 
     function log(bool p0, string memory p1) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string)", p0, p1));
     }
 
@@ -258,6 +275,7 @@ library console {
     }
 
     function log(address p0, string memory p1) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string)", p0, p1));
     }
 
@@ -274,6 +292,7 @@ library console {
     }
 
     function log(uint256 p0, uint256 p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,string)", p0, p1, p2));
     }
 
@@ -286,18 +305,23 @@ library console {
     }
 
     function log(uint256 p0, string memory p1, uint256 p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,uint256)", p0, p1, p2));
     }
 
     function log(uint256 p0, string memory p1, string memory p2) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,string)", p0, p1, p2));
     }
 
     function log(uint256 p0, string memory p1, bool p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,bool)", p0, p1, p2));
     }
 
     function log(uint256 p0, string memory p1, address p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,address)", p0, p1, p2));
     }
 
@@ -306,6 +330,7 @@ library console {
     }
 
     function log(uint256 p0, bool p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,string)", p0, p1, p2));
     }
 
@@ -322,6 +347,7 @@ library console {
     }
 
     function log(uint256 p0, address p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,string)", p0, p1, p2));
     }
 
@@ -334,66 +360,90 @@ library console {
     }
 
     function log(string memory p0, uint256 p1, uint256 p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,uint256)", p0, p1, p2));
     }
 
     function log(string memory p0, uint256 p1, string memory p2) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,string)", p0, p1, p2));
     }
 
     function log(string memory p0, uint256 p1, bool p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,bool)", p0, p1, p2));
     }
 
     function log(string memory p0, uint256 p1, address p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,address)", p0, p1, p2));
     }
 
     function log(string memory p0, string memory p1, uint256 p2) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint256)", p0, p1, p2));
     }
 
     function log(string memory p0, string memory p1, string memory p2) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,string)", p0, p1, p2));
     }
 
     function log(string memory p0, string memory p1, bool p2) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,bool)", p0, p1, p2));
     }
 
     function log(string memory p0, string memory p1, address p2) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address)", p0, p1, p2));
     }
 
     function log(string memory p0, bool p1, uint256 p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint256)", p0, p1, p2));
     }
 
     function log(string memory p0, bool p1, string memory p2) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,string)", p0, p1, p2));
     }
 
     function log(string memory p0, bool p1, bool p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,bool)", p0, p1, p2));
     }
 
     function log(string memory p0, bool p1, address p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address)", p0, p1, p2));
     }
 
     function log(string memory p0, address p1, uint256 p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint256)", p0, p1, p2));
     }
 
     function log(string memory p0, address p1, string memory p2) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,string)", p0, p1, p2));
     }
 
     function log(string memory p0, address p1, bool p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,bool)", p0, p1, p2));
     }
 
     function log(string memory p0, address p1, address p2) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address)", p0, p1, p2));
     }
 
@@ -402,6 +452,7 @@ library console {
     }
 
     function log(bool p0, uint256 p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,string)", p0, p1, p2));
     }
 
@@ -414,18 +465,23 @@ library console {
     }
 
     function log(bool p0, string memory p1, uint256 p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint256)", p0, p1, p2));
     }
 
     function log(bool p0, string memory p1, string memory p2) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,string)", p0, p1, p2));
     }
 
     function log(bool p0, string memory p1, bool p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,bool)", p0, p1, p2));
     }
 
     function log(bool p0, string memory p1, address p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address)", p0, p1, p2));
     }
 
@@ -434,6 +490,7 @@ library console {
     }
 
     function log(bool p0, bool p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,string)", p0, p1, p2));
     }
 
@@ -450,6 +507,7 @@ library console {
     }
 
     function log(bool p0, address p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,string)", p0, p1, p2));
     }
 
@@ -466,6 +524,7 @@ library console {
     }
 
     function log(address p0, uint256 p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,string)", p0, p1, p2));
     }
 
@@ -478,18 +537,23 @@ library console {
     }
 
     function log(address p0, string memory p1, uint256 p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint256)", p0, p1, p2));
     }
 
     function log(address p0, string memory p1, string memory p2) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,string)", p0, p1, p2));
     }
 
     function log(address p0, string memory p1, bool p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,bool)", p0, p1, p2));
     }
 
     function log(address p0, string memory p1, address p2) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address)", p0, p1, p2));
     }
 
@@ -498,6 +562,7 @@ library console {
     }
 
     function log(address p0, bool p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,string)", p0, p1, p2));
     }
 
@@ -514,6 +579,7 @@ library console {
     }
 
     function log(address p0, address p1, string memory p2) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,string)", p0, p1, p2));
     }
 
@@ -530,6 +596,7 @@ library console {
     }
 
     function log(uint256 p0, uint256 p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -542,18 +609,23 @@ library console {
     }
 
     function log(uint256 p0, uint256 p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, uint256 p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,string,string)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, uint256 p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,string,bool)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, uint256 p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,string,address)", p0, p1, p2, p3));
     }
 
@@ -562,6 +634,7 @@ library console {
     }
 
     function log(uint256 p0, uint256 p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,bool,string)", p0, p1, p2, p3));
     }
 
@@ -578,6 +651,7 @@ library console {
     }
 
     function log(uint256 p0, uint256 p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,address,string)", p0, p1, p2, p3));
     }
 
@@ -590,66 +664,90 @@ library console {
     }
 
     function log(uint256 p0, string memory p1, uint256 p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,uint256,uint256)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,uint256,string)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, uint256 p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,uint256,bool)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, uint256 p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,uint256,address)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,string,string)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,string,bool)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,string,address)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, bool p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,bool,uint256)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,bool,string)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, bool p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,bool,bool)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, bool p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,bool,address)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, address p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,address,uint256)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,address,string)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, address p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,address,bool)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, string memory p1, address p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,string,address,address)", p0, p1, p2, p3));
     }
 
@@ -658,6 +756,7 @@ library console {
     }
 
     function log(uint256 p0, bool p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -670,18 +769,23 @@ library console {
     }
 
     function log(uint256 p0, bool p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, bool p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,string,string)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, bool p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,string,bool)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, bool p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,string,address)", p0, p1, p2, p3));
     }
 
@@ -690,6 +794,7 @@ library console {
     }
 
     function log(uint256 p0, bool p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,bool,string)", p0, p1, p2, p3));
     }
 
@@ -706,6 +811,7 @@ library console {
     }
 
     function log(uint256 p0, bool p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,bool,address,string)", p0, p1, p2, p3));
     }
 
@@ -722,6 +828,7 @@ library console {
     }
 
     function log(uint256 p0, address p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -734,18 +841,23 @@ library console {
     }
 
     function log(uint256 p0, address p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, address p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,string,string)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, address p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,string,bool)", p0, p1, p2, p3));
     }
 
     function log(uint256 p0, address p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,string,address)", p0, p1, p2, p3));
     }
 
@@ -754,6 +866,7 @@ library console {
     }
 
     function log(uint256 p0, address p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,bool,string)", p0, p1, p2, p3));
     }
 
@@ -770,6 +883,7 @@ library console {
     }
 
     function log(uint256 p0, address p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(uint256,address,address,string)", p0, p1, p2, p3));
     }
 
@@ -782,258 +896,370 @@ library console {
     }
 
     function log(string memory p0, uint256 p1, uint256 p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,uint256,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,uint256,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, uint256 p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,uint256,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, uint256 p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,uint256,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,string,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,string,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,string,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, bool p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,bool,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,bool,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, bool p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,bool,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, bool p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,bool,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, address p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,address,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,address,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, address p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,address,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, uint256 p1, address p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,uint256,address,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, uint256 p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint256,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint256,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, uint256 p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint256,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, uint256 p2, address p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint256,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,string,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,string,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,string,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, bool p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,bool,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,bool,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, bool p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,bool,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, bool p2, address p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,bool,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, address p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, address p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, string memory p1, address p2, address p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, uint256 p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint256,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint256,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, uint256 p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint256,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, uint256 p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint256,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,string,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,string,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,string,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, bool p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,bool,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,bool,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, bool p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,bool,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, bool p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,bool,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, address p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, address p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, bool p1, address p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, uint256 p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint256,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint256,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, uint256 p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint256,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, uint256 p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint256,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,string,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,string,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,string,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, bool p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,bool,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,bool,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, bool p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,bool,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, bool p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,bool,address)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, address p2, uint256 p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address,uint256)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p0);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address,string)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, address p2, bool p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address,bool)", p0, p1, p2, p3));
     }
 
     function log(string memory p0, address p1, address p2, address p3) internal pure {
+        _assertLogStringLength(p0);
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address,address)", p0, p1, p2, p3));
     }
 
@@ -1042,6 +1268,7 @@ library console {
     }
 
     function log(bool p0, uint256 p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -1054,18 +1281,23 @@ library console {
     }
 
     function log(bool p0, uint256 p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(bool p0, uint256 p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,string,string)", p0, p1, p2, p3));
     }
 
     function log(bool p0, uint256 p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,string,bool)", p0, p1, p2, p3));
     }
 
     function log(bool p0, uint256 p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,string,address)", p0, p1, p2, p3));
     }
 
@@ -1074,6 +1306,7 @@ library console {
     }
 
     function log(bool p0, uint256 p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,bool,string)", p0, p1, p2, p3));
     }
 
@@ -1090,6 +1323,7 @@ library console {
     }
 
     function log(bool p0, uint256 p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint256,address,string)", p0, p1, p2, p3));
     }
 
@@ -1102,66 +1336,90 @@ library console {
     }
 
     function log(bool p0, string memory p1, uint256 p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint256,uint256)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint256,string)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, uint256 p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint256,bool)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, uint256 p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint256,address)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,string,string)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,string,bool)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,string,address)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, bool p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,bool,uint256)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,bool,string)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, bool p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,bool,bool)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, bool p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,bool,address)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, address p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address,uint256)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address,string)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, address p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address,bool)", p0, p1, p2, p3));
     }
 
     function log(bool p0, string memory p1, address p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address,address)", p0, p1, p2, p3));
     }
 
@@ -1170,6 +1428,7 @@ library console {
     }
 
     function log(bool p0, bool p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -1182,18 +1441,23 @@ library console {
     }
 
     function log(bool p0, bool p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(bool p0, bool p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,string,string)", p0, p1, p2, p3));
     }
 
     function log(bool p0, bool p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,string,bool)", p0, p1, p2, p3));
     }
 
     function log(bool p0, bool p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,string,address)", p0, p1, p2, p3));
     }
 
@@ -1202,6 +1466,7 @@ library console {
     }
 
     function log(bool p0, bool p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,bool,string)", p0, p1, p2, p3));
     }
 
@@ -1218,6 +1483,7 @@ library console {
     }
 
     function log(bool p0, bool p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,address,string)", p0, p1, p2, p3));
     }
 
@@ -1234,6 +1500,7 @@ library console {
     }
 
     function log(bool p0, address p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -1246,18 +1513,23 @@ library console {
     }
 
     function log(bool p0, address p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(bool p0, address p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,string,string)", p0, p1, p2, p3));
     }
 
     function log(bool p0, address p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,string,bool)", p0, p1, p2, p3));
     }
 
     function log(bool p0, address p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,string,address)", p0, p1, p2, p3));
     }
 
@@ -1266,6 +1538,7 @@ library console {
     }
 
     function log(bool p0, address p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,bool,string)", p0, p1, p2, p3));
     }
 
@@ -1282,6 +1555,7 @@ library console {
     }
 
     function log(bool p0, address p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,address,string)", p0, p1, p2, p3));
     }
 
@@ -1298,6 +1572,7 @@ library console {
     }
 
     function log(address p0, uint256 p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -1310,18 +1585,23 @@ library console {
     }
 
     function log(address p0, uint256 p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(address p0, uint256 p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,string,string)", p0, p1, p2, p3));
     }
 
     function log(address p0, uint256 p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,string,bool)", p0, p1, p2, p3));
     }
 
     function log(address p0, uint256 p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,string,address)", p0, p1, p2, p3));
     }
 
@@ -1330,6 +1610,7 @@ library console {
     }
 
     function log(address p0, uint256 p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,bool,string)", p0, p1, p2, p3));
     }
 
@@ -1346,6 +1627,7 @@ library console {
     }
 
     function log(address p0, uint256 p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,uint256,address,string)", p0, p1, p2, p3));
     }
 
@@ -1358,66 +1640,90 @@ library console {
     }
 
     function log(address p0, string memory p1, uint256 p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint256,uint256)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint256,string)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, uint256 p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint256,bool)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, uint256 p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint256,address)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,string,string)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,string,bool)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,string,address)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, bool p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,bool,uint256)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,bool,string)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, bool p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,bool,bool)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, bool p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,bool,address)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, address p2, uint256 p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address,uint256)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p1);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address,string)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, address p2, bool p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address,bool)", p0, p1, p2, p3));
     }
 
     function log(address p0, string memory p1, address p2, address p3) internal pure {
+        _assertLogStringLength(p1);
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address,address)", p0, p1, p2, p3));
     }
 
@@ -1426,6 +1732,7 @@ library console {
     }
 
     function log(address p0, bool p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -1438,18 +1745,23 @@ library console {
     }
 
     function log(address p0, bool p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(address p0, bool p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,string,string)", p0, p1, p2, p3));
     }
 
     function log(address p0, bool p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,string,bool)", p0, p1, p2, p3));
     }
 
     function log(address p0, bool p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,string,address)", p0, p1, p2, p3));
     }
 
@@ -1458,6 +1770,7 @@ library console {
     }
 
     function log(address p0, bool p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,bool,string)", p0, p1, p2, p3));
     }
 
@@ -1474,6 +1787,7 @@ library console {
     }
 
     function log(address p0, bool p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,address,string)", p0, p1, p2, p3));
     }
 
@@ -1490,6 +1804,7 @@ library console {
     }
 
     function log(address p0, address p1, uint256 p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,uint256,string)", p0, p1, p2, p3));
     }
 
@@ -1502,18 +1817,23 @@ library console {
     }
 
     function log(address p0, address p1, string memory p2, uint256 p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,string,uint256)", p0, p1, p2, p3));
     }
 
     function log(address p0, address p1, string memory p2, string memory p3) internal pure {
+        _assertLogStringLength(p2);
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,string,string)", p0, p1, p2, p3));
     }
 
     function log(address p0, address p1, string memory p2, bool p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,string,bool)", p0, p1, p2, p3));
     }
 
     function log(address p0, address p1, string memory p2, address p3) internal pure {
+        _assertLogStringLength(p2);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,string,address)", p0, p1, p2, p3));
     }
 
@@ -1522,6 +1842,7 @@ library console {
     }
 
     function log(address p0, address p1, bool p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,bool,string)", p0, p1, p2, p3));
     }
 
@@ -1538,6 +1859,7 @@ library console {
     }
 
     function log(address p0, address p1, address p2, string memory p3) internal pure {
+        _assertLogStringLength(p3);
         _sendLogPayload(abi.encodeWithSignature("log(address,address,address,string)", p0, p1, p2, p3));
     }
 
