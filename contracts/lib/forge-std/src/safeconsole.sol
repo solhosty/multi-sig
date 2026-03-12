@@ -19,7 +19,9 @@ library safeconsole {
 
     function _sendLogPayloadView(uint256 offset, uint256 size) private view {
         assembly ("memory-safe") {
-            pop(staticcall(gas(), CONSOLE_ADDR, offset, size, 0x0, 0x0))
+            if gt(extcodesize(CONSOLE_ADDR), 0) {
+                pop(staticcall(gas(), CONSOLE_ADDR, offset, size, 0x0, 0x0))
+            }
         }
     }
 

@@ -3,11 +3,14 @@ pragma solidity >=0.8.13 <0.9.0;
 
 library console {
     address constant CONSOLE_ADDRESS = 0x000000000000000000636F6e736F6c652e6c6f67;
+    uint256 constant MAX_LOG_STRING = 4096;
 
     function _sendLogPayloadImplementation(bytes memory payload) internal view {
         address consoleAddress = CONSOLE_ADDRESS;
         assembly ("memory-safe") {
-            pop(staticcall(gas(), consoleAddress, add(payload, 32), mload(payload), 0, 0))
+            if gt(extcodesize(consoleAddress), 0) {
+                pop(staticcall(gas(), consoleAddress, add(payload, 32), mload(payload), 0, 0))
+            }
         }
     }
 
@@ -530,6 +533,7 @@ library console {
     }
 
     function log(uint256 p0, uint256 p1, uint256 p2, string memory p3) internal pure {
+        require(bytes(p3).length <= MAX_LOG_STRING, "console: string too long");
         _sendLogPayload(abi.encodeWithSignature("log(uint256,uint256,uint256,string)", p0, p1, p2, p3));
     }
 
