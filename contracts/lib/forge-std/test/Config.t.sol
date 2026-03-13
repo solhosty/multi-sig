@@ -345,7 +345,7 @@ contract ConfigTest is Test, Config {
         );
 
         vm.expectRevert(abi.encodeWithSelector(StdConfig.InvalidChainKey.selector, "invalid_chain"));
-        new StdConfig(invalidChainConfig, false);
+        new StdConfig(invalidChainConfig, false, address(this));
         vm.removeFile(invalidChainConfig);
     }
 
@@ -375,7 +375,29 @@ contract ConfigTest is Test, Config {
         );
 
         vm.expectRevert(abi.encodeWithSelector(StdConfig.UnableToParseVariable.selector, "bad_value"));
-        new StdConfig(badParseConfig, false);
+        new StdConfig(badParseConfig, false, address(this));
         vm.removeFile(badParseConfig);
+    }
+
+    function testRevert_SetWhenCallerIsNotOwner() public {
+        _loadConfig("./test/fixtures/config.toml", false);
+
+        address notOwner = address(0xBEEF);
+        vm.prank(notOwner);
+        vm.expectRevert(abi.encodeWithSelector(StdConfig.Unauthorized.selector, notOwner));
+        config.set(1, "is_live", false);
+    }
+
+    function test_SetWhenCallerIsOwner() public {
+        _loadConfig("./test/fixtures/config.toml", false);
+
+        config.set(1, "is_live", false);
+        assertFalse(config.get(1, "is_live").toBool());
+    }
+
+    function test_OwnerIsImmutable() public {
+        _loadConfig("./test/fixtures/config.toml", false);
+
+        assertEq(config.owner(), address(this));
     }
 }

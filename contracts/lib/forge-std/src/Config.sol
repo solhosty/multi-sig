@@ -29,7 +29,7 @@ abstract contract Config is CommonBase {
     function _loadConfig(string memory filePath, bool writeToFile) internal {
         console.log("----------");
         console.log(string.concat("Loading config from '", filePath, "'"));
-        config = new StdConfig(filePath, writeToFile);
+        config = new StdConfig(filePath, writeToFile, address(this));
         vm.makePersistent(address(config));
         console.log("Config successfully loaded");
         console.log("----------");

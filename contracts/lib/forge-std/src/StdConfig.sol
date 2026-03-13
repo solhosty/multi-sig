@@ -47,6 +47,14 @@ contract StdConfig {
     error ChainNotInitialized(uint256 chainId);
     error UnableToParseVariable(string key);
     error WriteToFileInForbiddenCtxt();
+    error Unauthorized(address caller);
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert Unauthorized(msg.sender);
+        }
+        _;
+    }
 
     // -- STORAGE (CACHE FROM CONFIG FILE) ------------------------------------
 
@@ -70,6 +78,8 @@ contract StdConfig {
     ///      concurrent I/O access, as tests run in parallel.
     bool private _writeToFile;
 
+    address public immutable owner;
+
     // -- CONSTRUCTOR ----------------------------------------------------------
 
     /// @notice Reads the TOML file and iterates through each top-level key, which is
@@ -83,11 +93,12 @@ contract StdConfig {
     ///
     /// @param  configFilePath: The local path to the TOML configuration file.
     /// @param  writeToFile: Whether to write updates back to the TOML file. Only for scripts.
-    constructor(string memory configFilePath, bool writeToFile) {
+    constructor(string memory configFilePath, bool writeToFile, address _owner) {
         if (writeToFile && !vm.isContext(VmSafe.ForgeContext.ScriptGroup)) {
             revert WriteToFileInForbiddenCtxt();
         }
 
+        owner = _owner;
         _filePath = configFilePath;
         _writeToFile = writeToFile;
         string memory content = vm.resolveEnv(vm.readFile(configFilePath));
@@ -366,7 +377,7 @@ contract StdConfig {
 
     /// @notice Sets a boolean value for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, bool value) public {
+    function set(uint256 chainId, string memory key, bool value) public onlyOwner {
         Type memory ty = Type(TypeKind.Bool, false);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -375,13 +386,13 @@ contract StdConfig {
 
     /// @notice Sets a boolean value for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, bool value) public {
+    function set(string memory key, bool value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets an address value for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, address value) public {
+    function set(uint256 chainId, string memory key, address value) public onlyOwner {
         Type memory ty = Type(TypeKind.Address, false);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -390,13 +401,13 @@ contract StdConfig {
 
     /// @notice Sets an address value for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, address value) public {
+    function set(string memory key, address value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a bytes32 value for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, bytes32 value) public {
+    function set(uint256 chainId, string memory key, bytes32 value) public onlyOwner {
         Type memory ty = Type(TypeKind.Bytes32, false);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -405,13 +416,13 @@ contract StdConfig {
 
     /// @notice Sets a bytes32 value for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, bytes32 value) public {
+    function set(string memory key, bytes32 value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a uint256 value for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, uint256 value) public {
+    function set(uint256 chainId, string memory key, uint256 value) public onlyOwner {
         Type memory ty = Type(TypeKind.Uint256, false);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -420,12 +431,12 @@ contract StdConfig {
 
     /// @notice Sets a uint256 value for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, uint256 value) public {
+    function set(string memory key, uint256 value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets an int256 value for a given key and chain ID.
-    function set(uint256 chainId, string memory key, int256 value) public {
+    function set(uint256 chainId, string memory key, int256 value) public onlyOwner {
         Type memory ty = Type(TypeKind.Int256, false);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -433,13 +444,13 @@ contract StdConfig {
     }
 
     /// @notice Sets an int256 value for a given key on the current chain.
-    function set(string memory key, int256 value) public {
+    function set(string memory key, int256 value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a string value for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, string memory value) public {
+    function set(uint256 chainId, string memory key, string memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.String, false);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -448,13 +459,13 @@ contract StdConfig {
 
     /// @notice Sets a string value for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, string memory value) public {
+    function set(string memory key, string memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a bytes value for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, bytes memory value) public {
+    function set(uint256 chainId, string memory key, bytes memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.Bytes, false);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -463,7 +474,7 @@ contract StdConfig {
 
     /// @notice Sets a bytes value for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, bytes memory value) public {
+    function set(string memory key, bytes memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
@@ -471,7 +482,7 @@ contract StdConfig {
 
     /// @notice Sets a boolean array for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, bool[] memory value) public {
+    function set(uint256 chainId, string memory key, bool[] memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.Bool, true);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -488,13 +499,13 @@ contract StdConfig {
 
     /// @notice Sets a boolean array for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, bool[] memory value) public {
+    function set(string memory key, bool[] memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets an address array for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, address[] memory value) public {
+    function set(uint256 chainId, string memory key, address[] memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.Address, true);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -511,13 +522,13 @@ contract StdConfig {
 
     /// @notice Sets an address array for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, address[] memory value) public {
+    function set(string memory key, address[] memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a bytes32 array for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, bytes32[] memory value) public {
+    function set(uint256 chainId, string memory key, bytes32[] memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.Bytes32, true);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -534,13 +545,13 @@ contract StdConfig {
 
     /// @notice Sets a bytes32 array for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, bytes32[] memory value) public {
+    function set(string memory key, bytes32[] memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a uint256 array for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, uint256[] memory value) public {
+    function set(uint256 chainId, string memory key, uint256[] memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.Uint256, true);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -557,13 +568,13 @@ contract StdConfig {
 
     /// @notice Sets a uint256 array for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, uint256[] memory value) public {
+    function set(string memory key, uint256[] memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a int256 array for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, int256[] memory value) public {
+    function set(uint256 chainId, string memory key, int256[] memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.Int256, true);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -580,13 +591,13 @@ contract StdConfig {
 
     /// @notice Sets a int256 array for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, int256[] memory value) public {
+    function set(string memory key, int256[] memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a string array for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, string[] memory value) public {
+    function set(uint256 chainId, string memory key, string[] memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.String, true);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -603,13 +614,13 @@ contract StdConfig {
 
     /// @notice Sets a string array for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, string[] memory value) public {
+    function set(string memory key, string[] memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 
     /// @notice Sets a bytes array for a given key and chain ID.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(uint256 chainId, string memory key, bytes[] memory value) public {
+    function set(uint256 chainId, string memory key, bytes[] memory value) public onlyOwner {
         Type memory ty = Type(TypeKind.Bytes, true);
         _ensureTypeConsistency(chainId, key, ty);
         _dataOf[chainId][key] = abi.encode(value);
@@ -626,7 +637,7 @@ contract StdConfig {
 
     /// @notice Sets a bytes array for a given key on the current chain.
     /// @dev    Sets the cached value in storage and writes the change back to the TOML file if `autoWrite` is enabled.
-    function set(string memory key, bytes[] memory value) public {
+    function set(string memory key, bytes[] memory value) public onlyOwner {
         set(vm.getChainId(), key, value);
     }
 }
