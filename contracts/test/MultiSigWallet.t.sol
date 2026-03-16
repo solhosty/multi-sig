@@ -106,4 +106,13 @@ contract MultiSigWalletTest is Test {
         assertFalse(wallet.isOwner(bob));
         assertEq(wallet.threshold(), 2);
     }
+
+    function testRejectsDuplicateTransactionParameters() public {
+        vm.prank(alice);
+        wallet.submitTransaction(recipient, 1 ether, "");
+
+        vm.prank(bob);
+        vm.expectRevert(MultiSigWallet.DuplicateTransaction.selector);
+        wallet.submitTransaction(recipient, 1 ether, "");
+    }
 }

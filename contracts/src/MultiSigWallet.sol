@@ -12,6 +12,7 @@ contract MultiSigWallet {
     error AlreadyExecuted();
     error NotEnoughSignatures();
     error ExecutionFailed();
+    error DuplicateTransaction();
 
     struct Transaction {
         address to;
@@ -41,6 +42,7 @@ contract MultiSigWallet {
 
     Transaction[] private sTransactions;
     mapping(uint256 => mapping(address => bool)) private sSigned;
+    mapping(bytes32 => bool) private sTxParamExists;
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -66,6 +68,10 @@ contract MultiSigWallet {
         uint256 value,
         bytes calldata data
     ) external onlyOwner returns (uint256 txId) {
+        bytes32 txParamsHash = keccak256(abi.encode(to, value, data));
+        if (sTxParamExists[txParamsHash]) revert DuplicateTransaction();
+
+        sTxParamExists[txParamsHash] = true;
         txId = sTransactions.length;
         sTransactions.push(
             Transaction({to: to, value: value, data: data, executed: false, signatureCount: 0})
