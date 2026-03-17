@@ -40,7 +40,7 @@ contract MultiSigWalletTest is Test {
         assertEq(recipient.balance, recipientBalanceBefore + sendAmount);
         assertEq(address(wallet).balance, walletBalanceBefore - sendAmount);
 
-        (, , , bool executed, uint256 sigs) = wallet.getTransaction(txId);
+        (,,, bool executed, uint256 sigs) = wallet.getTransaction(txId);
         assertTrue(executed);
         assertEq(sigs, 2);
     }

@@ -30,7 +30,11 @@ contract MultiSigWallet {
         uint256 value,
         bytes data
     );
-    event TransactionSigned(uint256 indexed txId, address indexed owner, uint256 signatures);
+    event TransactionSigned(
+        uint256 indexed txId,
+        address indexed owner,
+        uint256 signatures
+    );
     event TransactionExecuted(uint256 indexed txId, address indexed owner);
     event OwnerAdded(address indexed newOwner);
     event OwnerRemoved(address indexed oldOwner);
@@ -103,7 +107,7 @@ contract MultiSigWallet {
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
-        (bool success, ) = txn.to.call{value: txn.value}(txn.data);
+        (bool success,) = txn.to.call{value: txn.value}(txn.data);
         if (!success) revert ExecutionFailed();
 
         emit TransactionExecuted(txId, msg.sender);
@@ -155,9 +159,7 @@ contract MultiSigWallet {
         return sTransactions.length;
     }
 
-    function getTransaction(
-        uint256 txId
-    )
+    function getTransaction(uint256 txId)
         external
         view
         returns (address to, uint256 value, bytes memory data, bool executed, uint256 signatureCount)
