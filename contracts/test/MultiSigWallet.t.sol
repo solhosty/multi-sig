@@ -45,6 +45,35 @@ contract MultiSigWalletTest is Test {
         assertEq(sigs, 2);
     }
 
+    function testSubmitTransactionRevertsForDuplicateParameters() public {
+        bytes memory payload = abi.encodeWithSignature("noop()");
+
+        vm.prank(alice);
+        wallet.submitTransaction(recipient, 1 ether, payload);
+
+        vm.prank(bob);
+        vm.expectRevert(MultiSigWallet.DuplicateTransaction.selector);
+        wallet.submitTransaction(recipient, 1 ether, payload);
+    }
+
+    function testSubmitTransactionAllowsSameTargetWithDifferentParameters() public {
+        bytes memory payloadA = abi.encodeWithSignature("opA(uint256)", 1);
+        bytes memory payloadB = abi.encodeWithSignature("opA(uint256)", 2);
+
+        vm.prank(alice);
+        uint256 txIdA = wallet.submitTransaction(recipient, 1 ether, payloadA);
+
+        vm.prank(alice);
+        uint256 txIdB = wallet.submitTransaction(recipient, 2 ether, payloadA);
+
+        vm.prank(alice);
+        uint256 txIdC = wallet.submitTransaction(recipient, 1 ether, payloadB);
+
+        assertEq(txIdA, 0);
+        assertEq(txIdB, 1);
+        assertEq(txIdC, 2);
+    }
+
     function testOwnerMutationsMustExecuteThroughSelfTransaction() public {
         vm.startPrank(alice);
         vm.expectRevert(MultiSigWallet.OnlySelf.selector);

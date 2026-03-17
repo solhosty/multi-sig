@@ -15,10 +15,10 @@ contract MultiSigFactory {
     mapping(address => address[]) private sWalletsByCreator;
     mapping(address => address[]) private sWalletsByOwner;
 
-    function createWallet(
-        address[] calldata owners,
-        uint256 threshold
-    ) external returns (address walletAddress) {
+    function createWallet(address[] calldata owners, uint256 threshold)
+        external
+        returns (address walletAddress)
+    {
         MultiSigWallet wallet = new MultiSigWallet(owners, threshold);
         walletAddress = address(wallet);
 
