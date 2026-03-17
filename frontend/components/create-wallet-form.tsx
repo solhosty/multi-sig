@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import { parseEventLogs } from "viem";
 import { useRouter } from "next/navigation";
@@ -17,10 +17,10 @@ export const CreateWalletForm = () => {
 
   const [ownersInput, setOwnersInput] = useState("");
   const [thresholdInput, setThresholdInput] = useState("2");
-  const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
   const [hash, setHash] = useState<`0x${string}` | null>(null);
 
   const receiptQuery = useWaitForTransactionReceipt({ hash: hash ?? undefined });
+  const notifiedWalletRef = useRef<`0x${string}` | null>(null);
 
   const owners = useMemo(() => {
     const raw = ownersInput
@@ -53,9 +53,9 @@ export const CreateWalletForm = () => {
     }
   };
 
-  useEffect(() => {
-    if (!receiptQuery.data || walletAddress) {
-      return;
+  const walletAddress = useMemo(() => {
+    if (!receiptQuery.data) {
+      return null;
     }
 
     const logs = parseEventLogs({
@@ -65,11 +65,17 @@ export const CreateWalletForm = () => {
     });
 
     const created = logs[0]?.args.wallet;
-    if (created) {
-      setWalletAddress(created);
-      toast.success("Wallet created");
+    return created ?? null;
+  }, [receiptQuery.data]);
+
+  useEffect(() => {
+    if (!walletAddress || notifiedWalletRef.current === walletAddress) {
+      return;
     }
-  }, [receiptQuery.data, walletAddress]);
+
+    notifiedWalletRef.current = walletAddress;
+    toast.success("Wallet created");
+  }, [walletAddress]);
 
   return (
     <div className="space-y-4">

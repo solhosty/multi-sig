@@ -24,11 +24,7 @@ contract MultiSigWallet {
 
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
     event TransactionSubmitted(
-        uint256 indexed txId,
-        address indexed owner,
-        address indexed to,
-        uint256 value,
-        bytes data
+        uint256 indexed txId, address indexed owner, address indexed to, uint256 value, bytes data
     );
     event TransactionSigned(uint256 indexed txId, address indexed owner, uint256 signatures);
     event TransactionExecuted(uint256 indexed txId, address indexed owner);
@@ -63,19 +59,17 @@ contract MultiSigWallet {
         emit Deposit(msg.sender, msg.value, address(this).balance);
     }
 
-    function submitTransaction(
-        address to,
-        uint256 value,
-        bytes calldata data
-    ) external onlyOwner returns (uint256 txId) {
+    function submitTransaction(address to, uint256 value, bytes calldata data)
+        external
+        onlyOwner
+        returns (uint256 txId)
+    {
         bytes32 txParamHash = keccak256(abi.encode(to, value, data));
         if (sTxParamExists[txParamHash]) revert DuplicateTransaction();
 
         sTxParamExists[txParamHash] = true;
         txId = sTransactions.length;
-        sTransactions.push(
-            Transaction({to: to, value: value, data: data, executed: false, signatureCount: 0})
-        );
+        sTransactions.push(Transaction({to: to, value: value, data: data, executed: false, signatureCount: 0}));
 
         emit TransactionSubmitted(txId, msg.sender, to, value, data);
     }
@@ -103,7 +97,7 @@ contract MultiSigWallet {
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
-        (bool success, ) = txn.to.call{value: txn.value}(txn.data);
+        (bool success,) = txn.to.call{value: txn.value}(txn.data);
         if (!success) revert ExecutionFailed();
 
         emit TransactionExecuted(txId, msg.sender);
@@ -155,9 +149,7 @@ contract MultiSigWallet {
         return sTransactions.length;
     }
 
-    function getTransaction(
-        uint256 txId
-    )
+    function getTransaction(uint256 txId)
         external
         view
         returns (address to, uint256 value, bytes memory data, bool executed, uint256 signatureCount)
