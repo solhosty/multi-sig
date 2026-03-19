@@ -1,10 +1,12 @@
 "use client";
 
 import { toast } from "sonner";
+import { useReadContract } from "wagmi";
 
 import type { WalletTransaction } from "@/lib/hooks/use-wallet-transactions";
 import { useMultisigActions } from "@/lib/hooks/use-multisig-actions";
 import { txExplorerUrl } from "@/lib/utils/explorer";
+import { multisigAbi } from "@/lib/contracts/multisig-abi";
 
 import { TransactionSigners } from "@/components/transaction-signers";
 
@@ -17,7 +19,15 @@ type Props = {
 
 export const TransactionCard = ({ tx, walletAddress, owners, threshold }: Props) => {
   const { execute, sign, isPending } = useMultisigActions(walletAddress);
-  const canExecute = tx.signatureCount >= threshold && !tx.executed;
+  const { data: validSigCount } = useReadContract({
+    abi: multisigAbi,
+    address: walletAddress,
+    functionName: "getValidSignatureCount",
+    args: [tx.id],
+    query: { enabled: !tx.executed, refetchInterval: 4_000 }
+  });
+  const sigCount = validSigCount ?? tx.signatureCount;
+  const canExecute = sigCount >= threshold && !tx.executed;
   const statusClass = tx.executed
     ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
     : "bg-[hsl(var(--warning))]/14 text-[hsl(var(--warning))]";
@@ -37,7 +47,7 @@ export const TransactionCard = ({ tx, walletAddress, owners, threshold }: Props)
         </p>
         <p>Value: {tx.value.toString()} wei</p>
         <p>
-          Signatures: {tx.signatureCount.toString()} / {threshold.toString()}
+          Signatures: {sigCount.toString()} / {threshold.toString()}
         </p>
       </div>
 

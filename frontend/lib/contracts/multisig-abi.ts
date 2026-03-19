@@ -88,5 +88,12 @@ export const multisigAbi = [
     stateMutability: "nonpayable",
     inputs: [{ name: "newThreshold", type: "uint256" }],
     outputs: []
+  },
+  {
+    type: "function",
+    name: "getValidSignatureCount",
+    stateMutability: "view",
+    inputs: [{ name: "txId", type: "uint256" }],
+    outputs: [{ name: "count", type: "uint256" }]
   }
 ] as const;
