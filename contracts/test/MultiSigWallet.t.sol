@@ -12,11 +12,19 @@ contract MultiSigWalletTest is Test {
     address internal carol = makeAddr("carol");
     address internal recipient = makeAddr("recipient");
 
+    MultiSigWallet internal wallet3;
+
     function setUp() public {
         address[] memory owners = new address[](2);
         owners[0] = alice;
         owners[1] = bob;
         wallet = new MultiSigWallet(owners, 2);
+
+        address[] memory owners3 = new address[](3);
+        owners3[0] = alice;
+        owners3[1] = bob;
+        owners3[2] = carol;
+        wallet3 = new MultiSigWallet(owners3, 2);
     }
 
     function testCanProposeSignAndExecuteEthTransferWithRealValue() public {
@@ -105,5 +113,50 @@ contract MultiSigWalletTest is Test {
 
         assertFalse(wallet.isOwner(bob));
         assertEq(wallet.threshold(), 2);
+    }
+
+    function testStaleSignaturesDoNotCountAfterOwnerRemoval() public {
+        // wallet3 has 3 owners (alice, bob, carol) with threshold 2
+        vm.deal(address(wallet3), 5 ether);
+
+        // Alice submits a tx to send 1 ETH to recipient
+        vm.prank(alice);
+        uint256 txId = wallet3.submitTransaction(recipient, 1 ether, "");
+
+        // Alice and Bob sign (signatureCount = 2 >= threshold 2)
+        vm.prank(alice);
+        wallet3.signTransaction(txId);
+        vm.prank(bob);
+        wallet3.signTransaction(txId);
+
+        // Remove Bob via governance (self-call)
+        bytes memory removeData = abi.encodeCall(MultiSigWallet.removeOwner, (bob));
+        vm.prank(alice);
+        uint256 removeTxId = wallet3.submitTransaction(address(wallet3), 0, removeData);
+        vm.prank(alice);
+        wallet3.signTransaction(removeTxId);
+        vm.prank(carol);
+        wallet3.signTransaction(removeTxId);
+        vm.prank(alice);
+        wallet3.executeTransaction(removeTxId);
+
+        assertFalse(wallet3.isOwner(bob));
+
+        // Now try to execute the original tx — should revert because
+        // Bob's signature is stale (he's no longer an owner)
+        // Only Alice's signature is valid, which is < threshold (2)
+        vm.prank(alice);
+        vm.expectRevert(MultiSigWallet.NotEnoughSignatures.selector);
+        wallet3.executeTransaction(txId);
+
+        // Carol signs, now validSignatures = 2 (alice + carol)
+        vm.prank(carol);
+        wallet3.signTransaction(txId);
+
+        // Now execution succeeds
+        vm.prank(alice);
+        wallet3.executeTransaction(txId);
+
+        assertEq(recipient.balance, 1 ether);
     }
 }

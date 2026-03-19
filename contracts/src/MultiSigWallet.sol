@@ -94,7 +94,16 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (txn.signatureCount < threshold) revert NotEnoughSignatures();
+
+        // Recompute valid signatures from current owners only
+        uint256 validSignatures = 0;
+        uint256 ownerCount = sOwners.length;
+        for (uint256 i = 0; i < ownerCount; i++) {
+            if (sSigned[txId][sOwners[i]]) {
+                validSignatures += 1;
+            }
+        }
+        if (validSignatures < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
         (bool success, ) = txn.to.call{value: txn.value}(txn.data);
