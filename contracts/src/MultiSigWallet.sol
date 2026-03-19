@@ -94,7 +94,15 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (txn.signatureCount < threshold) revert NotEnoughSignatures();
+
+        // Recompute valid signatures from current owners only
+        uint256 validSignatures = 0;
+        for (uint256 i = 0; i < sOwners.length; i++) {
+            if (sSigned[txId][sOwners[i]]) {
+                validSignatures += 1;
+            }
+        }
+        if (validSignatures < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
         (bool success, ) = txn.to.call{value: txn.value}(txn.data);
@@ -133,6 +141,16 @@ contract MultiSigWallet {
         }
 
         emit OwnerRemoved(oldOwner);
+
+        // Clear stale signatures for the removed owner
+        for (uint256 i = 0; i < sTransactions.length; i++) {
+            if (sSigned[i][oldOwner]) {
+                sSigned[i][oldOwner] = false;
+                if (sTransactions[i].signatureCount > 0) {
+                    sTransactions[i].signatureCount -= 1;
+                }
+            }
+        }
     }
 
     function updateThreshold(uint256 newThreshold) external onlySelf {
