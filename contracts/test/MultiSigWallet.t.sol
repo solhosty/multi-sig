@@ -40,9 +40,10 @@ contract MultiSigWalletTest is Test {
         assertEq(recipient.balance, recipientBalanceBefore + sendAmount);
         assertEq(address(wallet).balance, walletBalanceBefore - sendAmount);
 
-        (, , , bool executed, uint256 sigs) = wallet.getTransaction(txId);
+        (, , , bool executed, uint256 sigs, uint256 txConfigNonce) = wallet.getTransaction(txId);
         assertTrue(executed);
         assertEq(sigs, 2);
+        assertEq(txConfigNonce, wallet.configNonce());
     }
 
     function testOwnerMutationsMustExecuteThroughSelfTransaction() public {
@@ -105,5 +106,88 @@ contract MultiSigWalletTest is Test {
 
         assertFalse(wallet.isOwner(bob));
         assertEq(wallet.threshold(), 2);
+    }
+
+    function testStaleTransactionRevertsAfterOwnerRemoval() public {
+        vm.prank(alice);
+        uint256 staleTx = wallet.submitTransaction(recipient, 0.25 ether, "");
+
+        bytes memory removeOwnerData = abi.encodeCall(MultiSigWallet.removeOwner, (bob));
+        _executeGovernanceTx(removeOwnerData);
+
+        assertFalse(wallet.isOwner(bob));
+        assertEq(wallet.threshold(), 1);
+
+        vm.prank(alice);
+        vm.expectRevert(MultiSigWallet.StaleTransaction.selector);
+        wallet.signTransaction(staleTx);
+
+        vm.prank(alice);
+        vm.expectRevert(MultiSigWallet.StaleTransaction.selector);
+        wallet.executeTransaction(staleTx);
+    }
+
+    function testStaleTransactionRevertsAfterThresholdChange() public {
+        vm.prank(alice);
+        uint256 staleTx = wallet.submitTransaction(recipient, 0.25 ether, "");
+
+        bytes memory updateThresholdData = abi.encodeCall(MultiSigWallet.updateThreshold, (1));
+        _executeGovernanceTx(updateThresholdData);
+
+        assertEq(wallet.threshold(), 1);
+
+        vm.prank(alice);
+        vm.expectRevert(MultiSigWallet.StaleTransaction.selector);
+        wallet.signTransaction(staleTx);
+
+        vm.prank(alice);
+        vm.expectRevert(MultiSigWallet.StaleTransaction.selector);
+        wallet.executeTransaction(staleTx);
+    }
+
+    function testResubmittedTransactionWorksAfterNonceBump() public {
+        vm.deal(address(wallet), 3 ether);
+        uint256 sendAmount = 0.75 ether;
+        uint256 recipientBalanceBefore = recipient.balance;
+
+        vm.prank(alice);
+        uint256 staleTx = wallet.submitTransaction(recipient, sendAmount, "");
+
+        bytes memory updateThresholdData = abi.encodeCall(MultiSigWallet.updateThreshold, (1));
+        _executeGovernanceTx(updateThresholdData);
+
+        vm.prank(alice);
+        vm.expectRevert(MultiSigWallet.StaleTransaction.selector);
+        wallet.executeTransaction(staleTx);
+
+        vm.prank(alice);
+        uint256 freshTx = wallet.submitTransaction(recipient, sendAmount, "");
+
+        vm.prank(alice);
+        wallet.signTransaction(freshTx);
+
+        vm.prank(alice);
+        wallet.executeTransaction(freshTx);
+
+        assertEq(recipient.balance, recipientBalanceBefore + sendAmount);
+
+        (, , , bool executed, uint256 sigs, uint256 txConfigNonce) = wallet.getTransaction(freshTx);
+        assertTrue(executed);
+        assertEq(sigs, 1);
+        assertEq(txConfigNonce, wallet.configNonce());
+    }
+
+    function _executeGovernanceTx(bytes memory data) internal returns (uint256 txId) {
+        vm.prank(alice);
+        txId = wallet.submitTransaction(address(wallet), 0, data);
+
+        vm.prank(alice);
+        wallet.signTransaction(txId);
+
+        vm.prank(bob);
+        wallet.signTransaction(txId);
+
+        vm.prank(alice);
+        wallet.executeTransaction(txId);
     }
 }
