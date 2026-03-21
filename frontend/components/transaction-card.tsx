@@ -1,7 +1,9 @@
 "use client";
 
 import { toast } from "sonner";
+import { useReadContract } from "wagmi";
 
+import { multisigAbi } from "@/lib/contracts/multisig-abi";
 import type { WalletTransaction } from "@/lib/hooks/use-wallet-transactions";
 import { useMultisigActions } from "@/lib/hooks/use-multisig-actions";
 import { txExplorerUrl } from "@/lib/utils/explorer";
@@ -17,17 +19,31 @@ type Props = {
 
 export const TransactionCard = ({ tx, walletAddress, owners, threshold }: Props) => {
   const { execute, sign, isPending } = useMultisigActions(walletAddress);
-  const canExecute = tx.signatureCount >= threshold && !tx.executed;
+  const configNonceQuery = useReadContract({
+    abi: multisigAbi,
+    address: walletAddress,
+    functionName: "configNonce",
+    query: {
+      enabled: Boolean(walletAddress),
+      refetchInterval: 4_000
+    }
+  });
+  const currentConfigNonce = configNonceQuery.data;
+  const isStale =
+    !tx.executed && currentConfigNonce !== undefined && tx.configNonce !== currentConfigNonce;
+  const canExecute = tx.signatureCount >= threshold && !tx.executed && !isStale;
   const statusClass = tx.executed
     ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
-    : "bg-[hsl(var(--warning))]/14 text-[hsl(var(--warning))]";
+    : isStale
+      ? "bg-[hsl(var(--warning))]/22 text-[hsl(var(--warning))]"
+      : "bg-[hsl(var(--warning))]/14 text-[hsl(var(--warning))]";
 
   return (
     <article className="panel space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">Transaction #{tx.id.toString()}</h4>
         <span className={`rounded-full px-2 py-1 text-xs ${statusClass}`}>
-          {tx.executed ? "executed" : "pending"}
+          {tx.executed ? "executed" : isStale ? "stale" : "pending"}
         </span>
       </div>
 
@@ -39,6 +55,11 @@ export const TransactionCard = ({ tx, walletAddress, owners, threshold }: Props)
         <p>
           Signatures: {tx.signatureCount.toString()} / {threshold.toString()}
         </p>
+        {isStale ? (
+          <p className="text-[hsl(var(--warning))]">
+            Stale approvals: governance changed. Re-submit this transaction.
+          </p>
+        ) : null}
       </div>
 
       <TransactionSigners owners={owners} txId={tx.id} walletAddress={walletAddress} />
