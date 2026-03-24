@@ -15,6 +15,9 @@ contract DeployScript is Script {
         vm.stopBroadcast();
 
         console2.log("MultiSigFactory deployed at:", address(factory));
+        console2.log(
+            "Note: createWallet now requires per-owner EIP-712 signatures collected off-chain"
+        );
     }
 }
 
