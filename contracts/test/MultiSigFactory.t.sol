@@ -21,12 +21,15 @@ contract MultiSigFactoryTest is Test {
     }
 
     function testIndexesWalletsByCreatorAndOwner() public {
-        address[] memory owners = new address[](2);
-        owners[0] = ownerA;
-        owners[1] = ownerB;
+        address[] memory owners = new address[](3);
+        owners[0] = creator;
+        owners[1] = ownerA;
+        owners[2] = ownerB;
 
         vm.prank(creator);
         address walletOne = factory.createWallet(owners, 2);
+
+        owners[0] = secondCreator;
 
         vm.prank(secondCreator);
         address walletTwo = factory.createWallet(owners, 2);
@@ -44,17 +47,27 @@ contract MultiSigFactoryTest is Test {
         assertEq(ownerWallets[0], walletOne);
         assertEq(ownerWallets[1], walletTwo);
 
+        address[] memory creatorOwnerWallets = factory.getWalletsByOwner(creator);
+        assertEq(creatorOwnerWallets.length, 1);
+        assertEq(creatorOwnerWallets[0], walletOne);
+
+        address[] memory secondCreatorOwnerWallets = factory.getWalletsByOwner(secondCreator);
+        assertEq(secondCreatorOwnerWallets.length, 1);
+        assertEq(secondCreatorOwnerWallets[0], walletTwo);
+
         assertEq(factory.getWalletCount(), 2);
     }
 
     function testFactoryWalletsHoldAndTransferEthInIsolation() public {
-        address[] memory ownersOne = new address[](2);
-        ownersOne[0] = ownerA;
-        ownersOne[1] = ownerB;
+        address[] memory ownersOne = new address[](3);
+        ownersOne[0] = creator;
+        ownersOne[1] = ownerA;
+        ownersOne[2] = ownerB;
 
-        address[] memory ownersTwo = new address[](2);
-        ownersTwo[0] = ownerB;
-        ownersTwo[1] = ownerC;
+        address[] memory ownersTwo = new address[](3);
+        ownersTwo[0] = creator;
+        ownersTwo[1] = ownerB;
+        ownersTwo[2] = ownerC;
 
         vm.startPrank(creator);
         address walletOneAddress = factory.createWallet(ownersOne, 2);
@@ -99,5 +112,15 @@ contract MultiSigFactoryTest is Test {
         assertFalse(walletOne.hasSigned(oneTx, ownerC));
         assertTrue(walletTwo.hasSigned(twoTx, ownerC));
         assertFalse(walletTwo.hasSigned(twoTx, ownerA));
+    }
+
+    function testRevertsWhenCreatorNotInOwners() public {
+        address[] memory owners = new address[](2);
+        owners[0] = ownerA;
+        owners[1] = ownerB;
+
+        vm.prank(creator);
+        vm.expectRevert(MultiSigFactory.CreatorMustBeOwner.selector);
+        factory.createWallet(owners, 2);
     }
 }

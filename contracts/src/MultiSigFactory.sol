@@ -4,6 +4,8 @@ pragma solidity ^0.8.24;
 import {MultiSigWallet} from "./MultiSigWallet.sol";
 
 contract MultiSigFactory {
+    error CreatorMustBeOwner();
+
     event WalletCreated(
         address indexed creator,
         address indexed wallet,
@@ -19,6 +21,18 @@ contract MultiSigFactory {
         address[] calldata owners,
         uint256 threshold
     ) external returns (address walletAddress) {
+        bool creatorIsOwner;
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (owners[i] == msg.sender) {
+                creatorIsOwner = true;
+                break;
+            }
+        }
+
+        if (!creatorIsOwner) {
+            revert CreatorMustBeOwner();
+        }
+
         MultiSigWallet wallet = new MultiSigWallet(owners, threshold);
         walletAddress = address(wallet);
 
