@@ -31,6 +31,20 @@ export const factoryAbi = [
     outputs: [{ name: "", type: "address[]" }]
   },
   {
+    type: "function",
+    name: "registerAsOwner",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "walletAddress", type: "address" }],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "unregisterAsOwner",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "walletAddress", type: "address" }],
+    outputs: []
+  },
+  {
     type: "event",
     name: "WalletCreated",
     inputs: [
@@ -38,6 +52,24 @@ export const factoryAbi = [
       { name: "wallet", type: "address", indexed: true },
       { name: "owners", type: "address[]", indexed: false },
       { name: "threshold", type: "uint256", indexed: false }
+    ],
+    anonymous: false
+  },
+  {
+    type: "event",
+    name: "OwnerRegistered",
+    inputs: [
+      { name: "owner", type: "address", indexed: true },
+      { name: "wallet", type: "address", indexed: true }
+    ],
+    anonymous: false
+  },
+  {
+    type: "event",
+    name: "OwnerUnregistered",
+    inputs: [
+      { name: "owner", type: "address", indexed: true },
+      { name: "wallet", type: "address", indexed: true }
     ],
     anonymous: false
   }
