@@ -42,6 +42,7 @@ contract MultiSigWallet {
     Transaction[] private sTransactions;
     mapping(uint256 => mapping(address => bool)) private sSigned;
     mapping(uint256 => address[]) private sTxSigners;
+    mapping(uint256 => mapping(address => bool)) private sSignerRecorded;
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -83,7 +84,10 @@ contract MultiSigWallet {
         if (sSigned[txId][msg.sender]) revert AlreadySigned();
 
         sSigned[txId][msg.sender] = true;
-        sTxSigners[txId].push(msg.sender);
+        if (!sSignerRecorded[txId][msg.sender]) {
+            sSignerRecorded[txId][msg.sender] = true;
+            sTxSigners[txId].push(msg.sender);
+        }
         unchecked {
             txn.signatureCount += 1;
         }
