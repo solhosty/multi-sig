@@ -12,6 +12,7 @@ contract MultiSigWallet {
     error AlreadyExecuted();
     error NotEnoughSignatures();
     error ExecutionFailed();
+    error SignatureEpochMismatch();
 
     struct Transaction {
         address to;
@@ -19,6 +20,7 @@ contract MultiSigWallet {
         bytes data;
         bool executed;
         uint256 signatureCount;
+        uint256 epoch;
     }
 
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
@@ -38,6 +40,7 @@ contract MultiSigWallet {
     address[] private sOwners;
     mapping(address => bool) public isOwner;
     uint256 public threshold;
+    uint256 public signingEpoch;
 
     Transaction[] private sTransactions;
     mapping(uint256 => mapping(address => bool)) private sSigned;
@@ -68,7 +71,14 @@ contract MultiSigWallet {
     ) external onlyOwner returns (uint256 txId) {
         txId = sTransactions.length;
         sTransactions.push(
-            Transaction({to: to, value: value, data: data, executed: false, signatureCount: 0})
+            Transaction({
+                to: to,
+                value: value,
+                data: data,
+                executed: false,
+                signatureCount: 0,
+                epoch: signingEpoch
+            })
         );
 
         emit TransactionSubmitted(txId, msg.sender, to, value, data);
@@ -79,6 +89,7 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
+        if (txn.epoch != signingEpoch) revert SignatureEpochMismatch();
         if (sSigned[txId][msg.sender]) revert AlreadySigned();
 
         sSigned[txId][msg.sender] = true;
@@ -94,6 +105,7 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
+        if (txn.epoch != signingEpoch) revert SignatureEpochMismatch();
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
@@ -109,6 +121,9 @@ contract MultiSigWallet {
 
         isOwner[newOwner] = true;
         sOwners.push(newOwner);
+        unchecked {
+            signingEpoch += 1;
+        }
 
         emit OwnerAdded(newOwner);
     }
@@ -131,6 +146,9 @@ contract MultiSigWallet {
             threshold = sOwners.length;
             emit ThresholdUpdated(oldThreshold, threshold);
         }
+        unchecked {
+            signingEpoch += 1;
+        }
 
         emit OwnerRemoved(oldOwner);
     }
@@ -138,6 +156,11 @@ contract MultiSigWallet {
     function updateThreshold(uint256 newThreshold) external onlySelf {
         uint256 oldThreshold = threshold;
         _setThreshold(newThreshold);
+        if (newThreshold != oldThreshold) {
+            unchecked {
+                signingEpoch += 1;
+            }
+        }
         emit ThresholdUpdated(oldThreshold, threshold);
     }
 
