@@ -26,3 +26,9 @@ build/
 cache/
 artifacts/
 typechain-types/
+
+# Rust
+rust/target/
+
+# Go
+golang/bin/
