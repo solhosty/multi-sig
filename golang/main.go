@@ -186,8 +186,11 @@ func main() {
 	})
 
 	mux.HandleFunc("/signers", func(w http.ResponseWriter, r *http.Request) {
+		wallet.mu.RLock()
+		signers := append([]Signer(nil), wallet.Signers...)
+		wallet.mu.RUnlock()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(wallet.Signers)
+		json.NewEncoder(w).Encode(signers)
 	})
 
 	mux.HandleFunc("/transactions", func(w http.ResponseWriter, r *http.Request) {
