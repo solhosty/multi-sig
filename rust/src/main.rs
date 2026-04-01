@@ -130,6 +130,13 @@ impl MultiSigWallet {
         }
 
         let threshold = self.threshold;
+        let active_signers: Vec<&str> = self
+            .signers
+            .iter()
+            .filter(|signer| signer.active)
+            .map(|signer| signer.address.as_str())
+            .collect();
+
         let tx = self
             .transactions
             .iter_mut()
@@ -140,6 +147,9 @@ impl MultiSigWallet {
             return Err(WalletError::AlreadyExecuted(tx_id));
         }
 
+        tx.approvals
+            .retain(|approval| active_signers.iter().any(|active| *active == approval.as_str()));
+
         if tx.approvals.iter().any(|a| a == signer_addr) {
             return Err(WalletError::DuplicateApproval(
                 signer_addr.to_string(),
@@ -149,8 +159,14 @@ impl MultiSigWallet {
 
         tx.approvals.push(signer_addr.to_string());
 
+        let valid_approval_count = tx
+            .approvals
+            .iter()
+            .filter(|approval| active_signers.iter().any(|active| *active == approval.as_str()))
+            .count();
+
         // Pattern matching on threshold check
-        match tx.approvals.len() >= threshold {
+        match valid_approval_count >= threshold {
             true => {
                 tx.status = TxStatus::Executed;
                 println!("Transaction {} executed! (threshold {} met)", tx_id, threshold);
@@ -159,7 +175,7 @@ impl MultiSigWallet {
                 println!(
                     "Transaction {} has {}/{} approvals",
                     tx_id,
-                    tx.approvals.len(),
+                    valid_approval_count,
                     threshold
                 );
             }
