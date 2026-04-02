@@ -4,9 +4,11 @@ import Link from "next/link";
 import { formatEther } from "viem";
 import { useBalance } from "wagmi";
 
+import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { QuickSendDemo } from "@/components/quick-send-demo";
 import { WalletTransactionHistory } from "@/components/wallet-transaction-history";
 import { useMultisig } from "@/lib/hooks/use-multisig";
+import { useWalletOwnership } from "@/lib/hooks/use-wallet-ownership";
 import { useWalletTransactions } from "@/lib/hooks/use-wallet-transactions";
 
 type Props = {
@@ -22,6 +24,19 @@ const formatBalance = (value: bigint): string => {
 
 export default function WalletDashboardPage({ params }: Props) {
   const walletAddress = params.walletAddress;
+  const { accessState, hasAccess, validWalletAddress } = useWalletOwnership(walletAddress);
+
+  if (!validWalletAddress) {
+    return (
+      <section className="space-y-5 py-6">
+        <div className="panel p-6 md:p-8">
+          <h1 className="text-2xl font-semibold md:text-3xl">Wallet Dashboard</h1>
+          <p className="mt-2 text-sm subtle-text">Invalid wallet address in route.</p>
+        </div>
+      </section>
+    );
+  }
+
   const { owners, threshold } = useMultisig(walletAddress);
   const { transactions } = useWalletTransactions(walletAddress);
   const { data: balance } = useBalance({ address: walletAddress });
@@ -69,22 +84,51 @@ export default function WalletDashboardPage({ params }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Link className="btn-primary px-4 py-2 text-sm" href={`/wallets/${walletAddress}/send`}>
-            Send / Sign / Execute
-          </Link>
+          {hasAccess ? (
+            <Link className="btn-primary px-4 py-2 text-sm" href={`/wallets/${walletAddress}/send`}>
+              Send / Sign / Execute
+            </Link>
+          ) : null}
           <Link
             className="btn-secondary px-4 py-2 text-sm"
             href={`/wallets/${walletAddress}/transactions`}
           >
             Open Transactions
           </Link>
-          <Link className="btn-secondary px-4 py-2 text-sm" href={`/wallets/${walletAddress}/settings`}>
-            Owner Settings
-          </Link>
+          {hasAccess ? (
+            <Link className="btn-secondary px-4 py-2 text-sm" href={`/wallets/${walletAddress}/settings`}>
+              Owner Settings
+            </Link>
+          ) : null}
         </div>
+
+        {!hasAccess ? (
+          <div className="panel space-y-3 p-4 text-sm">
+            {accessState === "no_connector" ? (
+              <p className="subtle-text">No wallet connector detected.</p>
+            ) : null}
+            {accessState === "not_connected" ? (
+              <>
+                <p className="subtle-text">Connect a wallet owner account for management access.</p>
+                <ConnectWalletButton />
+              </>
+            ) : null}
+            {accessState === "checking" ? (
+              <p className="subtle-text">Checking on-chain owner permissions...</p>
+            ) : null}
+            {accessState === "not_owner" ? (
+              <p className="subtle-text">
+                Connected wallet is not an owner of this multi-sig. Dashboard is read-only.
+              </p>
+            ) : null}
+            {accessState === "read_failed" ? (
+              <p className="subtle-text">Unable to verify owner status from chain. Try again shortly.</p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      <QuickSendDemo walletAddress={walletAddress} />
+      {hasAccess ? <QuickSendDemo walletAddress={walletAddress} /> : null}
       <WalletTransactionHistory walletAddress={walletAddress} />
     </section>
   );
