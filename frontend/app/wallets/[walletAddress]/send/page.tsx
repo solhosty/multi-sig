@@ -1,5 +1,7 @@
 "use client";
 
+import { use } from "react";
+
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { PendingTransactionsPanel } from "@/components/pending-transactions-panel";
 import { SendErc20Form } from "@/components/send-erc20-form";
@@ -7,13 +9,13 @@ import { SendEthForm } from "@/components/send-eth-form";
 import { useWalletOwnership } from "@/lib/hooks/use-wallet-ownership";
 
 type Props = {
-  params: {
+  params: Promise<{
     walletAddress: `0x${string}`;
-  };
+  }>;
 };
 
 export default function WalletSendPage({ params }: Props) {
-  const walletAddress = params.walletAddress;
+  const { walletAddress } = use(params);
   const { accessState, hasAccess } = useWalletOwnership(walletAddress);
 
   if (!hasAccess) {

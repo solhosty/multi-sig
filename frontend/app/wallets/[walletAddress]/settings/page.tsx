@@ -1,18 +1,20 @@
 "use client";
 
+import { use } from "react";
+
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { OwnerManagement } from "@/components/owner-management";
 import { PendingTransactionsPanel } from "@/components/pending-transactions-panel";
 import { useWalletOwnership } from "@/lib/hooks/use-wallet-ownership";
 
 type Props = {
-  params: {
+  params: Promise<{
     walletAddress: `0x${string}`;
-  };
+  }>;
 };
 
 export default function WalletSettingsPage({ params }: Props) {
-  const walletAddress = params.walletAddress;
+  const { walletAddress } = use(params);
   const { accessState, hasAccess } = useWalletOwnership(walletAddress);
 
   if (!hasAccess) {

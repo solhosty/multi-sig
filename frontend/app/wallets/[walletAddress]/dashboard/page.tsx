@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { use } from "react";
 import { formatEther } from "viem";
 import { useBalance } from "wagmi";
 
@@ -12,9 +13,9 @@ import { useWalletOwnership } from "@/lib/hooks/use-wallet-ownership";
 import { useWalletTransactions } from "@/lib/hooks/use-wallet-transactions";
 
 type Props = {
-  params: {
+  params: Promise<{
     walletAddress: `0x${string}`;
-  };
+  }>;
 };
 
 const formatBalance = (value: bigint): string => {
@@ -23,7 +24,7 @@ const formatBalance = (value: bigint): string => {
 };
 
 export default function WalletDashboardPage({ params }: Props) {
-  const walletAddress = params.walletAddress;
+  const { walletAddress } = use(params);
   const { accessState, hasAccess, validWalletAddress } = useWalletOwnership(walletAddress);
 
   if (!validWalletAddress) {
