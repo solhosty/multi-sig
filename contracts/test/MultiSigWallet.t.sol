@@ -106,4 +106,54 @@ contract MultiSigWalletTest is Test {
         assertFalse(wallet.isOwner(bob));
         assertEq(wallet.threshold(), 2);
     }
+
+    function testRemovedOwnerSignaturesAreClearedFromPendingTransactions() public {
+        vm.deal(address(wallet), 2 ether);
+
+        bytes memory addOwnerData = abi.encodeCall(MultiSigWallet.addOwner, (carol));
+
+        vm.prank(alice);
+        uint256 addOwnerTx = wallet.submitTransaction(address(wallet), 0, addOwnerData);
+
+        vm.prank(alice);
+        wallet.signTransaction(addOwnerTx);
+
+        vm.prank(bob);
+        wallet.signTransaction(addOwnerTx);
+
+        vm.prank(alice);
+        wallet.executeTransaction(addOwnerTx);
+
+        vm.prank(bob);
+        uint256 paymentTx = wallet.submitTransaction(recipient, 1 ether, "");
+
+        vm.prank(bob);
+        wallet.signTransaction(paymentTx);
+
+        vm.prank(carol);
+        wallet.signTransaction(paymentTx);
+
+        bytes memory removeOwnerData = abi.encodeCall(MultiSigWallet.removeOwner, (bob));
+
+        vm.prank(alice);
+        uint256 removeOwnerTx = wallet.submitTransaction(address(wallet), 0, removeOwnerData);
+
+        vm.prank(alice);
+        wallet.signTransaction(removeOwnerTx);
+
+        vm.prank(carol);
+        wallet.signTransaction(removeOwnerTx);
+
+        vm.prank(alice);
+        wallet.executeTransaction(removeOwnerTx);
+
+        assertFalse(wallet.hasSigned(paymentTx, bob));
+        (, , , bool executed, uint256 signatureCount) = wallet.getTransaction(paymentTx);
+        assertFalse(executed);
+        assertEq(signatureCount, 1);
+
+        vm.prank(alice);
+        vm.expectRevert(MultiSigWallet.NotEnoughSignatures.selector);
+        wallet.executeTransaction(paymentTx);
+    }
 }
