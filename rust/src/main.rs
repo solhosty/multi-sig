@@ -3,6 +3,8 @@ use std::fmt;
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 use std::time::SystemTime;
 
 // --- Enums ---
@@ -298,33 +300,33 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(mut stream) => {
-                let reader = BufReader::new(&stream);
-                let request_line = reader
-                    .lines()
-                    .next()
-                    .unwrap_or(Ok(String::new()))
-                    .unwrap_or_default();
+                let wallet = Arc::clone(&wallet);
+                thread::spawn(move || {
+                    let _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
+                    let reader = BufReader::new(&stream);
+                    let request_line = reader
+                        .lines()
+                        .next()
+                        .unwrap_or(Ok(String::new()))
+                        .unwrap_or_default();
 
-                // Parse the path from "GET /path HTTP/1.1"
-                let path = request_line
-                    .split_whitespace()
-                    .nth(1)
-                    .unwrap_or("/");
+                    // Parse the path from "GET /path HTTP/1.1"
+                    let path = request_line
+                        .split_whitespace()
+                        .nth(1)
+                        .unwrap_or("/");
 
-                let (status, body) = handle_request(path, &wallet);
+                    let (status, body) = handle_request(path, &wallet);
 
-                let content_type = if path == "/" {
-                    "text/html"
-                } else {
-                    "application/json"
-                };
+                    let content_type = if path == "/" { "text/html" } else { "application/json" };
 
-                let response = format!(
-                    "HTTP/1.1 {status}\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\n\r\n{body}",
-                    body.len()
-                );
+                    let response = format!(
+                        "HTTP/1.1 {status}\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\n\r\n{body}",
+                        body.len()
+                    );
 
-                let _ = stream.write_all(response.as_bytes());
+                    let _ = stream.write_all(response.as_bytes());
+                });
             }
             Err(e) => eprintln!("Connection failed: {e}"),
         }
