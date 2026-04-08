@@ -8,6 +8,13 @@ export const multisigAbi = [
   },
   {
     type: "function",
+    name: "configNonce",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }]
+  },
+  {
+    type: "function",
     name: "getOwners",
     stateMutability: "view",
     inputs: [],
@@ -30,7 +37,8 @@ export const multisigAbi = [
       { name: "value", type: "uint256" },
       { name: "data", type: "bytes" },
       { name: "executed", type: "bool" },
-      { name: "signatureCount", type: "uint256" }
+      { name: "signatureCount", type: "uint256" },
+      { name: "txConfigNonce", type: "uint256" }
     ]
   },
   {
