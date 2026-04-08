@@ -94,8 +94,12 @@ func (w *MultiSigWallet) Approve(txID int, signerAddr string) error {
 			if tx.Executed {
 				return fmt.Errorf("transaction %d already executed", txID)
 			}
+
+			w.Transactions[i].Approvals = w.filterActiveApprovals(w.Transactions[i].Approvals)
+			approvals := w.Transactions[i].Approvals
+
 			// Check for duplicate approval
-			for _, addr := range tx.Approvals {
+			for _, addr := range approvals {
 				if addr == signerAddr {
 					return fmt.Errorf("signer %s already approved tx %d", signerAddr, txID)
 				}
@@ -103,7 +107,7 @@ func (w *MultiSigWallet) Approve(txID int, signerAddr string) error {
 			w.Transactions[i].Approvals = append(w.Transactions[i].Approvals, signerAddr)
 
 			// Auto-execute if threshold met
-			if len(w.Transactions[i].Approvals) >= w.Threshold {
+			if w.countActiveApprovals(w.Transactions[i].Approvals) >= w.Threshold {
 				w.Transactions[i].Executed = true
 				log.Printf("Transaction %d executed! (threshold %d met)", txID, w.Threshold)
 			}
@@ -120,6 +124,26 @@ func (w *MultiSigWallet) isActiveSigner(addr string) bool {
 		}
 	}
 	return false
+}
+
+func (w *MultiSigWallet) filterActiveApprovals(approvals []string) []string {
+	filtered := make([]string, 0, len(approvals))
+	for _, addr := range approvals {
+		if w.isActiveSigner(addr) {
+			filtered = append(filtered, addr)
+		}
+	}
+	return filtered
+}
+
+func (w *MultiSigWallet) countActiveApprovals(approvals []string) int {
+	count := 0
+	for _, addr := range approvals {
+		if w.isActiveSigner(addr) {
+			count++
+		}
+	}
+	return count
 }
 
 // --- Goroutines and Channels ---

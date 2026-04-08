@@ -94,7 +94,9 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (txn.signatureCount < threshold) revert NotEnoughSignatures();
+
+        uint256 validSignatureCount = _countValidSignatures(txId);
+        if (validSignatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
         (bool success, ) = txn.to.call{value: txn.value}(txn.data);
@@ -123,6 +125,22 @@ contract MultiSigWallet {
                 sOwners[i] = sOwners[length - 1];
                 sOwners.pop();
                 break;
+            }
+        }
+
+        uint256 txLength = sTransactions.length;
+        for (uint256 txId = 0; txId < txLength; txId++) {
+            Transaction storage txn = sTransactions[txId];
+            if (txn.executed) continue;
+
+            if (sSigned[txId][oldOwner]) {
+                sSigned[txId][oldOwner] = false;
+
+                if (txn.signatureCount > 0) {
+                    unchecked {
+                        txn.signatureCount -= 1;
+                    }
+                }
             }
         }
 
@@ -183,6 +201,18 @@ contract MultiSigWallet {
     function _setThreshold(uint256 threshold_) private {
         if (threshold_ == 0 || threshold_ > sOwners.length) revert InvalidThreshold();
         threshold = threshold_;
+    }
+
+    function _countValidSignatures(uint256 txId) private view returns (uint256 count) {
+        uint256 ownersLength = sOwners.length;
+
+        for (uint256 i = 0; i < ownersLength; i++) {
+            if (sSigned[txId][sOwners[i]]) {
+                unchecked {
+                    count += 1;
+                }
+            }
+        }
     }
 
     function _onlyOwner() internal view {
