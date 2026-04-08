@@ -116,6 +116,15 @@ contract MultiSigWallet {
     function removeOwner(address oldOwner) external onlySelf {
         if (!isOwner[oldOwner]) revert InvalidOwner();
 
+        uint256 txLength = sTransactions.length;
+        for (uint256 txId = 0; txId < txLength; txId++) {
+            Transaction storage txn = sTransactions[txId];
+            if (!txn.executed && sSigned[txId][oldOwner]) {
+                sSigned[txId][oldOwner] = false;
+                txn.signatureCount -= 1;
+            }
+        }
+
         isOwner[oldOwner] = false;
         uint256 length = sOwners.length;
         for (uint256 i = 0; i < length; i++) {
