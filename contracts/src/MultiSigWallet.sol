@@ -94,7 +94,7 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (txn.signatureCount < threshold) revert NotEnoughSignatures();
+        if (_countCurrentOwnerSignatures(txId) < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
         (bool success, ) = txn.to.call{value: txn.value}(txn.data);
@@ -158,7 +158,13 @@ contract MultiSigWallet {
     {
         if (txId >= sTransactions.length) revert TxDoesNotExist();
         Transaction storage txn = sTransactions[txId];
-        return (txn.to, txn.value, txn.data, txn.executed, txn.signatureCount);
+        return (
+            txn.to,
+            txn.value,
+            txn.data,
+            txn.executed,
+            _countCurrentOwnerSignatures(txId)
+        );
     }
 
     function hasSigned(uint256 txId, address owner) external view returns (bool) {
@@ -191,5 +197,16 @@ contract MultiSigWallet {
 
     function _onlySelf() internal view {
         if (msg.sender != address(this)) revert OnlySelf();
+    }
+
+    function _countCurrentOwnerSignatures(uint256 txId) internal view returns (uint256 count) {
+        uint256 ownersLength = sOwners.length;
+        for (uint256 i = 0; i < ownersLength; i++) {
+            if (sSigned[txId][sOwners[i]]) {
+                unchecked {
+                    count += 1;
+                }
+            }
+        }
     }
 }
