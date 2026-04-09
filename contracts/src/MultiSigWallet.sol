@@ -37,10 +37,11 @@ contract MultiSigWallet {
 
     address[] private sOwners;
     mapping(address => bool) public isOwner;
+    mapping(address => uint256) private sOwnerNonce;
     uint256 public threshold;
 
     Transaction[] private sTransactions;
-    mapping(uint256 => mapping(address => bool)) private sSigned;
+    mapping(uint256 => mapping(address => uint256)) private sSignedNonce;
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -79,9 +80,10 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (sSigned[txId][msg.sender]) revert AlreadySigned();
+        uint256 ownerNonce = sOwnerNonce[msg.sender];
+        if (sSignedNonce[txId][msg.sender] == ownerNonce) revert AlreadySigned();
 
-        sSigned[txId][msg.sender] = true;
+        sSignedNonce[txId][msg.sender] = ownerNonce;
         unchecked {
             txn.signatureCount += 1;
         }
@@ -94,7 +96,7 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (txn.signatureCount < threshold) revert NotEnoughSignatures();
+        if (_countValidSignatures(txId) < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
         (bool success, ) = txn.to.call{value: txn.value}(txn.data);
@@ -107,6 +109,9 @@ contract MultiSigWallet {
         if (newOwner == address(0)) revert InvalidOwner();
         if (isOwner[newOwner]) revert OwnerExists();
 
+        unchecked {
+            sOwnerNonce[newOwner] += 1;
+        }
         isOwner[newOwner] = true;
         sOwners.push(newOwner);
 
@@ -116,6 +121,9 @@ contract MultiSigWallet {
     function removeOwner(address oldOwner) external onlySelf {
         if (!isOwner[oldOwner]) revert InvalidOwner();
 
+        unchecked {
+            sOwnerNonce[oldOwner] += 1;
+        }
         isOwner[oldOwner] = false;
         uint256 length = sOwners.length;
         for (uint256 i = 0; i < length; i++) {
@@ -163,7 +171,8 @@ contract MultiSigWallet {
 
     function hasSigned(uint256 txId, address owner) external view returns (bool) {
         if (txId >= sTransactions.length) revert TxDoesNotExist();
-        return sSigned[txId][owner];
+        uint256 signedNonce = sSignedNonce[txId][owner];
+        return signedNonce != 0 && signedNonce == sOwnerNonce[owner];
     }
 
     function _setOwners(address[] memory owners_) private {
@@ -175,8 +184,23 @@ contract MultiSigWallet {
             if (owner == address(0)) revert InvalidOwner();
             if (isOwner[owner]) revert OwnerExists();
 
+            unchecked {
+                sOwnerNonce[owner] += 1;
+            }
             isOwner[owner] = true;
             sOwners.push(owner);
+        }
+    }
+
+    function _countValidSignatures(uint256 txId) private view returns (uint256 count) {
+        uint256 ownersLength = sOwners.length;
+        for (uint256 i = 0; i < ownersLength; i++) {
+            address owner = sOwners[i];
+            if (sSignedNonce[txId][owner] == sOwnerNonce[owner]) {
+                unchecked {
+                    count += 1;
+                }
+            }
         }
     }
 
