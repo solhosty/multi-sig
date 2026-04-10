@@ -21,7 +21,7 @@ contract VulnerableVault {
     function withdraw(uint256 amount) external {
         require(balances[msg.sender] >= amount, "Insufficient balance");
 
-        (bool success,) = msg.sender.call{value: amount}("");
+        (bool success,) = msg.sender.call{ value: amount }("");
         require(success, "Transfer failed");
 
         balances[msg.sender] -= amount;
@@ -31,7 +31,7 @@ contract VulnerableVault {
     // Missing access control: anyone can drain
     function emergencyWithdraw(address to) external {
         uint256 balance = address(this).balance;
-        (bool success,) = to.call{value: balance}("");
+        (bool success,) = to.call{ value: balance }("");
         require(success, "Transfer failed");
     }
 
