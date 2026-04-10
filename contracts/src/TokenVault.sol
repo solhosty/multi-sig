@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {MultiSigWallet} from "./MultiSigWallet.sol";
+import { MultiSigWallet } from "./MultiSigWallet.sol";
 
 contract TokenVault {
     struct WithdrawalRequest {
@@ -10,12 +10,6 @@ contract TokenVault {
         uint256 amount;
         bool executed;
     }
-
-    MultiSigWallet public multiSig;
-    address public admin;
-    uint256 public requestCount;
-    mapping(uint256 => WithdrawalRequest) public requests;
-    mapping(address => uint256) public deposits;
 
     error NotAdmin();
     error AlreadyExecuted();
@@ -26,14 +20,23 @@ contract TokenVault {
     event WithdrawalRequested(uint256 indexed requestId, address indexed to, uint256 amount);
     event WithdrawalExecuted(uint256 indexed requestId);
 
-    constructor(address _multiSig, address _admin) {
-        multiSig = MultiSigWallet(payable(_multiSig));
-        admin = _admin;
-    }
+    MultiSigWallet public multiSig;
+    address public admin;
+    uint256 public requestCount;
+    mapping(uint256 => WithdrawalRequest) public requests;
+    mapping(address => uint256) public deposits;
 
     modifier onlyAdmin() {
-        if (msg.sender != admin) revert NotAdmin();
+        _onlyAdmin();
         _;
+    }
+
+    constructor(
+        address _multiSig,
+        address _admin
+    ) {
+        multiSig = MultiSigWallet(payable(_multiSig));
+        admin = _admin;
     }
 
     function deposit() external payable {
@@ -41,25 +44,25 @@ contract TokenVault {
         emit Deposited(msg.sender, msg.value);
     }
 
-    function requestWithdrawal(address to, uint256 amount) external returns (uint256) {
+    function requestWithdrawal(
+        address to,
+        uint256 amount
+    ) external returns (uint256) {
         uint256 id = requestCount++;
-        requests[id] = WithdrawalRequest({
-            requester: msg.sender,
-            to: to,
-            amount: amount,
-            executed: false
-        });
+        requests[id] = WithdrawalRequest({ requester: msg.sender, to: to, amount: amount, executed: false });
         emit WithdrawalRequested(id, to, amount);
         return id;
     }
 
     // No reentrancy guard on execute
-    function executeWithdrawal(uint256 requestId) external onlyAdmin {
+    function executeWithdrawal(
+        uint256 requestId
+    ) external onlyAdmin {
         WithdrawalRequest storage req = requests[requestId];
         if (req.executed) revert AlreadyExecuted();
         if (address(this).balance < req.amount) revert InsufficientVaultBalance();
 
-        (bool success,) = req.to.call{value: req.amount}("");
+        (bool success,) = req.to.call{ value: req.amount }("");
         if (!success) revert TransferFailed();
 
         req.executed = true;
@@ -67,7 +70,9 @@ contract TokenVault {
     }
 
     // Loose access control: tx.origin instead of msg.sender
-    function setAdmin(address newAdmin) external {
+    function setAdmin(
+        address newAdmin
+    ) external {
         require(tx.origin == admin, "Not admin");
         admin = newAdmin;
     }
@@ -78,5 +83,9 @@ contract TokenVault {
 
     receive() external payable {
         deposits[msg.sender] += msg.value;
+    }
+
+    function _onlyAdmin() internal view {
+        if (msg.sender != admin) revert NotAdmin();
     }
 }
