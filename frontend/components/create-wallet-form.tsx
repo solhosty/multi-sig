@@ -95,7 +95,7 @@ export const CreateWalletForm = () => {
           value={thresholdInput}
         />
         <button
-          className="rounded-md bg-[hsl(var(--accent))] px-4 py-2 text-sm font-semibold text-white"
+          className="btn-primary px-5 py-2.5 text-sm"
           disabled={isCreating || receiptQuery.isLoading}
           type="submit"
         >

@@ -48,11 +48,7 @@ export const SendEthForm = ({ walletAddress }: Props) => {
         placeholder="Amount in ETH"
         value={amount}
       />
-      <button
-        className="btn-primary px-3 py-2 text-sm"
-        disabled={isPending}
-        type="submit"
-      >
+      <button className="btn-primary px-5 py-2.5 text-sm" disabled={isPending} type="submit">
         Submit ETH Proposal
       </button>
     </form>
