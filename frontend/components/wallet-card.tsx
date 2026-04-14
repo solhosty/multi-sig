@@ -51,7 +51,7 @@ export const WalletCard = ({ walletAddress }: Props) => {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Link className="btn-primary px-3 py-2 text-xs" href={`/wallets/${walletAddress}/dashboard`}>
+        <Link className="btn-primary px-4 py-2 text-sm" href={`/wallets/${walletAddress}/dashboard`}>
           Open Dashboard
         </Link>
         <Link className="btn-secondary px-3 py-2 text-xs" href={`/wallets/${walletAddress}/send`}>

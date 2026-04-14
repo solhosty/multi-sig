@@ -67,11 +67,7 @@ export const SendErc20Form = ({ walletAddress }: Props) => {
           value={decimals}
         />
       </div>
-      <button
-        className="btn-primary px-3 py-2 text-sm"
-        disabled={isPending}
-        type="submit"
-      >
+      <button className="btn-primary px-5 py-2.5 text-sm" disabled={isPending} type="submit">
         Submit ERC-20 Proposal
       </button>
     </form>
