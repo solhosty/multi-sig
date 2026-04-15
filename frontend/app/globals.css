@@ -7,7 +7,7 @@
   --foreground: 217 33% 14%;
   --card: 0 0% 100%;
   --border: 220 18% 84%;
-  --accent: 142 71% 45%;
+  --accent: 38 92% 50%;
   --muted: 214 26% 93%;
   --muted-foreground: 215 16% 39%;
   --success: 153 60% 38%;
@@ -19,7 +19,7 @@
   --foreground: 210 30% 95%;
   --card: 218 28% 12%;
   --border: 214 22% 24%;
-  --accent: 142 69% 58%;
+  --accent: 38 92% 60%;
   --muted: 217 19% 19%;
   --muted-foreground: 214 18% 73%;
   --success: 152 63% 45%;
@@ -85,15 +85,15 @@ body {
 
 .btn-primary {
   border-radius: 0.875rem;
-  background: linear-gradient(135deg, hsl(var(--accent)), rgba(22, 163, 74, 0.95));
-  color: white;
+  background: linear-gradient(135deg, hsl(var(--accent)), rgba(217, 119, 6, 0.95));
+  color: rgb(15, 23, 42);
   font-weight: 600;
   transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.34);
+  box-shadow: 0 10px 24px rgba(217, 119, 6, 0.34);
 }
 
 .btn-secondary {
