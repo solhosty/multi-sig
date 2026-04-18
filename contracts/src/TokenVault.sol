@@ -25,6 +25,7 @@ contract TokenVault {
     event Deposited(address indexed user, uint256 amount);
     event WithdrawalRequested(uint256 indexed requestId, address indexed to, uint256 amount);
     event WithdrawalExecuted(uint256 indexed requestId);
+    event AdminChanged(address indexed oldAdmin, address indexed newAdmin);
 
     constructor(address _multiSig, address _admin) {
         multiSig = MultiSigWallet(payable(_multiSig));
@@ -66,10 +67,11 @@ contract TokenVault {
         emit WithdrawalExecuted(requestId);
     }
 
-    // Loose access control: tx.origin instead of msg.sender
-    function setAdmin(address newAdmin) external {
-        require(tx.origin == admin, "Not admin");
+    function setAdmin(address newAdmin) external onlyAdmin {
+        if (newAdmin == address(0)) revert NotAdmin();
+        address oldAdmin = admin;
         admin = newAdmin;
+        emit AdminChanged(oldAdmin, newAdmin);
     }
 
     function getVaultBalance() external view returns (uint256) {

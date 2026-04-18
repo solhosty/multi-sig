@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -249,6 +250,9 @@ fn handle_request(path: &str, wallet: &Mutex<MultiSigWallet>) -> (String, String
 }
 
 fn main() {
+    const MAX_ACTIVE_CONNECTIONS: usize = 128;
+    const MAX_REQUEST_LINE: usize = 8192;
+
     let signers = vec![
         Signer {
             address: "0xAlice".to_string(),
@@ -297,18 +301,48 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").expect("Failed to bind to port 8080");
     println!("\nRust multi-sig server listening on http://127.0.0.1:8080");
 
+    let active_connections = Arc::new(AtomicUsize::new(0));
+
     for stream in listener.incoming() {
         match stream {
             Ok(mut stream) => {
                 let wallet = Arc::clone(&wallet);
+                let active_connections = Arc::clone(&active_connections);
+
+                if active_connections.fetch_add(1, Ordering::SeqCst) >= MAX_ACTIVE_CONNECTIONS {
+                    active_connections.fetch_sub(1, Ordering::SeqCst);
+                    let response = "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/plain\r\nContent-Length: 19\r\n\r\nService Unavailable";
+                    let _ = stream.write_all(response.as_bytes());
+                    continue;
+                }
+
                 thread::spawn(move || {
+                    struct ActiveConnectionGuard {
+                        counter: Arc<AtomicUsize>,
+                    }
+
+                    impl Drop for ActiveConnectionGuard {
+                        fn drop(&mut self) {
+                            self.counter.fetch_sub(1, Ordering::SeqCst);
+                        }
+                    }
+
+                    let _active_connection_guard = ActiveConnectionGuard {
+                        counter: active_connections,
+                    };
+
                     let _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
-                    let reader = BufReader::new(&stream);
-                    let request_line = reader
-                        .lines()
-                        .next()
-                        .unwrap_or(Ok(String::new()))
-                        .unwrap_or_default();
+                    let mut request_line = String::with_capacity(MAX_REQUEST_LINE + 2);
+                    {
+                        let mut reader = BufReader::new(&mut stream);
+                        if reader.read_line(&mut request_line).is_err()
+                            || request_line.len() > MAX_REQUEST_LINE
+                        {
+                            let response = "HTTP/1.1 414 Request-URI Too Long\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\nRequest Too Long";
+                            let _ = stream.write_all(response.as_bytes());
+                            return;
+                        }
+                    }
 
                     // Parse the path from "GET /path HTTP/1.1"
                     let path = request_line
