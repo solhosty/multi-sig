@@ -8,6 +8,20 @@ export const multisigAbi = [
   },
   {
     type: "function",
+    name: "isAdmin",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ name: "", type: "bool" }]
+  },
+  {
+    type: "function",
+    name: "isUser",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [{ name: "", type: "bool" }]
+  },
+  {
+    type: "function",
     name: "getOwners",
     stateMutability: "view",
     inputs: [],
@@ -88,5 +102,57 @@ export const multisigAbi = [
     stateMutability: "nonpayable",
     inputs: [{ name: "newThreshold", type: "uint256" }],
     outputs: []
+  },
+  {
+    type: "function",
+    name: "grantAdmin",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "revokeAdmin",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "grantUser",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: []
+  },
+  {
+    type: "function",
+    name: "revokeUser",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: []
+  },
+  {
+    type: "event",
+    name: "AdminGranted",
+    inputs: [{ name: "account", type: "address", indexed: true }],
+    anonymous: false
+  },
+  {
+    type: "event",
+    name: "AdminRevoked",
+    inputs: [{ name: "account", type: "address", indexed: true }],
+    anonymous: false
+  },
+  {
+    type: "event",
+    name: "UserGranted",
+    inputs: [{ name: "account", type: "address", indexed: true }],
+    anonymous: false
+  },
+  {
+    type: "event",
+    name: "UserRevoked",
+    inputs: [{ name: "account", type: "address", indexed: true }],
+    anonymous: false
   }
 ] as const;
