@@ -3,10 +3,16 @@ pragma solidity ^0.8.24;
 
 contract MultiSigWallet {
     error NotOwner();
+    error NotAdmin();
+    error NotUser();
     error OnlySelf();
     error InvalidThreshold();
     error InvalidOwner();
     error OwnerExists();
+    error AlreadyAdmin();
+    error AlreadyUser();
+    error NotAnAdmin();
+    error NotAUser();
     error TxDoesNotExist();
     error AlreadySigned();
     error AlreadyExecuted();
@@ -34,16 +40,32 @@ contract MultiSigWallet {
     event OwnerAdded(address indexed newOwner);
     event OwnerRemoved(address indexed oldOwner);
     event ThresholdUpdated(uint256 oldThreshold, uint256 newThreshold);
+    event AdminGranted(address indexed account);
+    event AdminRevoked(address indexed account);
+    event UserGranted(address indexed account);
+    event UserRevoked(address indexed account);
 
     address[] private sOwners;
     mapping(address => bool) public isOwner;
+    mapping(address => bool) public isAdmin;
+    mapping(address => bool) public isUser;
     uint256 public threshold;
 
     Transaction[] private sTransactions;
     mapping(uint256 => mapping(address => bool)) private sSigned;
 
-    modifier onlyOwner() {
-        _onlyOwner();
+    modifier onlyOwnerRole() {
+        _onlyOwnerRole();
+        _;
+    }
+
+    modifier onlyAdminOrOwner() {
+        _onlyAdminOrOwner();
+        _;
+    }
+
+    modifier onlyUserOrAbove() {
+        _onlyUserOrAbove();
         _;
     }
 
@@ -65,7 +87,7 @@ contract MultiSigWallet {
         address to,
         uint256 value,
         bytes calldata data
-    ) external onlyOwner returns (uint256 txId) {
+    ) external onlyUserOrAbove returns (uint256 txId) {
         txId = sTransactions.length;
         sTransactions.push(
             Transaction({to: to, value: value, data: data, executed: false, signatureCount: 0})
@@ -74,7 +96,7 @@ contract MultiSigWallet {
         emit TransactionSubmitted(txId, msg.sender, to, value, data);
     }
 
-    function signTransaction(uint256 txId) external onlyOwner {
+    function signTransaction(uint256 txId) external onlyUserOrAbove {
         if (txId >= sTransactions.length) revert TxDoesNotExist();
 
         Transaction storage txn = sTransactions[txId];
@@ -89,7 +111,7 @@ contract MultiSigWallet {
         emit TransactionSigned(txId, msg.sender, txn.signatureCount);
     }
 
-    function executeTransaction(uint256 txId) external onlyOwner {
+    function executeTransaction(uint256 txId) external onlyUserOrAbove {
         if (txId >= sTransactions.length) revert TxDoesNotExist();
 
         Transaction storage txn = sTransactions[txId];
@@ -141,6 +163,38 @@ contract MultiSigWallet {
         emit ThresholdUpdated(oldThreshold, threshold);
     }
 
+    function grantAdmin(address account) external onlySelf {
+        if (account == address(0)) revert InvalidOwner();
+        if (isOwner[account] || isAdmin[account]) revert AlreadyAdmin();
+
+        isAdmin[account] = true;
+        emit AdminGranted(account);
+    }
+
+    function revokeAdmin(address account) external onlySelf {
+        if (account == address(0)) revert InvalidOwner();
+        if (!isAdmin[account]) revert NotAnAdmin();
+
+        isAdmin[account] = false;
+        emit AdminRevoked(account);
+    }
+
+    function grantUser(address account) external onlySelf {
+        if (account == address(0)) revert InvalidOwner();
+        if (isOwner[account] || isAdmin[account] || isUser[account]) revert AlreadyUser();
+
+        isUser[account] = true;
+        emit UserGranted(account);
+    }
+
+    function revokeUser(address account) external onlySelf {
+        if (account == address(0)) revert InvalidOwner();
+        if (!isUser[account]) revert NotAUser();
+
+        isUser[account] = false;
+        emit UserRevoked(account);
+    }
+
     function getOwners() external view returns (address[] memory) {
         return sOwners;
     }
@@ -185,8 +239,16 @@ contract MultiSigWallet {
         threshold = threshold_;
     }
 
-    function _onlyOwner() internal view {
+    function _onlyOwnerRole() internal view {
         if (!isOwner[msg.sender]) revert NotOwner();
+    }
+
+    function _onlyAdminOrOwner() internal view {
+        if (!isOwner[msg.sender] && !isAdmin[msg.sender]) revert NotAdmin();
+    }
+
+    function _onlyUserOrAbove() internal view {
+        if (!isOwner[msg.sender] && !isAdmin[msg.sender] && !isUser[msg.sender]) revert NotUser();
     }
 
     function _onlySelf() internal view {

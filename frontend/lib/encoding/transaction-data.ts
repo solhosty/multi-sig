@@ -35,4 +35,36 @@ export const encodeUpdateThreshold = (newThreshold: bigint): `0x${string}` => {
   });
 };
 
+export const encodeGrantAdmin = (account: `0x${string}`): `0x${string}` => {
+  return encodeFunctionData({
+    abi: multisigAbi,
+    functionName: "grantAdmin",
+    args: [account]
+  });
+};
+
+export const encodeRevokeAdmin = (account: `0x${string}`): `0x${string}` => {
+  return encodeFunctionData({
+    abi: multisigAbi,
+    functionName: "revokeAdmin",
+    args: [account]
+  });
+};
+
+export const encodeGrantUser = (account: `0x${string}`): `0x${string}` => {
+  return encodeFunctionData({
+    abi: multisigAbi,
+    functionName: "grantUser",
+    args: [account]
+  });
+};
+
+export const encodeRevokeUser = (account: `0x${string}`): `0x${string}` => {
+  return encodeFunctionData({
+    abi: multisigAbi,
+    functionName: "revokeUser",
+    args: [account]
+  });
+};
+
 export const parseEthAmount = (value: string): bigint => parseEther(value || "0");
