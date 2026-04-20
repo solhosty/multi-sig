@@ -59,8 +59,36 @@ export const useFactory = () => {
     });
   };
 
+  const registerAsOwner = async (walletAddress: `0x${string}`) => {
+    if (!contractConfig.factoryAddress) {
+      throw new Error("Factory address is not configured");
+    }
+
+    return writeContractAsync({
+      abi: factoryAbi,
+      address: contractConfig.factoryAddress,
+      functionName: "registerAsOwner",
+      args: [walletAddress]
+    });
+  };
+
+  const unregisterAsOwner = async (walletAddress: `0x${string}`) => {
+    if (!contractConfig.factoryAddress) {
+      throw new Error("Factory address is not configured");
+    }
+
+    return writeContractAsync({
+      abi: factoryAbi,
+      address: contractConfig.factoryAddress,
+      functionName: "unregisterAsOwner",
+      args: [walletAddress]
+    });
+  };
+
   return {
     createWallet,
+    registerAsOwner,
+    unregisterAsOwner,
     creatorWallets,
     ownerWallets,
     ownedWallets,
