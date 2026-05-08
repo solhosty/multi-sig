@@ -33,10 +33,7 @@ export const ImportWalletForm = () => {
         placeholder="0x..."
         value={input}
       />
-      <button
-        className="rounded-md bg-[hsl(var(--accent))] px-4 py-2 text-sm font-semibold text-white"
-        type="submit"
-      >
+      <button className="btn-primary px-4 py-2 text-sm" type="submit">
         Open Wallet
       </button>
     </form>
