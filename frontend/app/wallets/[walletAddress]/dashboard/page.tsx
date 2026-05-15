@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { use } from "react";
 import { formatEther } from "viem";
 import { useBalance } from "wagmi";
 
@@ -8,11 +9,13 @@ import { QuickSendDemo } from "@/components/quick-send-demo";
 import { WalletTransactionHistory } from "@/components/wallet-transaction-history";
 import { useMultisig } from "@/lib/hooks/use-multisig";
 import { useWalletTransactions } from "@/lib/hooks/use-wallet-transactions";
+import {
+  getValidWalletAddressFromParams,
+  type WalletAddressRouteParams,
+} from "@/lib/utils/wallet-address";
 
 type Props = {
-  params: {
-    walletAddress: `0x${string}`;
-  };
+  params: Promise<WalletAddressRouteParams>;
 };
 
 const formatBalance = (value: bigint): string => {
@@ -21,7 +24,17 @@ const formatBalance = (value: bigint): string => {
 };
 
 export default function WalletDashboardPage({ params }: Props) {
-  const walletAddress = params.walletAddress;
+  const resolvedParams = use(params);
+  const walletAddress = getValidWalletAddressFromParams(resolvedParams);
+
+  if (!walletAddress) {
+    return (
+      <section className="space-y-4 py-6">
+        <h1 className="text-2xl font-semibold">Invalid wallet address</h1>
+      </section>
+    );
+  }
+
   const { owners, threshold } = useMultisig(walletAddress);
   const { transactions } = useWalletTransactions(walletAddress);
   const { data: balance } = useBalance({ address: walletAddress });
