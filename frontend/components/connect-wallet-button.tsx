@@ -1,5 +1,6 @@
 "use client";
 
+import { LogOut, Wallet } from "lucide-react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 
 export const ConnectWalletButton = () => {
@@ -14,7 +15,15 @@ export const ConnectWalletButton = () => {
         onClick={() => disconnect()}
         type="button"
       >
-        {`${address.slice(0, 6)}...${address.slice(-4)} · Disconnect`}
+        <span className="inline-flex items-center gap-2">
+          <Wallet className="h-4 w-4" />
+          <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+          <span className="subtle-text">·</span>
+          <span className="inline-flex items-center gap-1">
+            <LogOut className="h-3.5 w-3.5" />
+            Disconnect
+          </span>
+        </span>
       </button>
     );
   }
@@ -31,7 +40,10 @@ export const ConnectWalletButton = () => {
       onClick={() => connect({ connector })}
       type="button"
     >
-      {isPending ? "Connecting..." : "Connect Wallet"}
+      <span className="inline-flex items-center gap-2">
+        <Wallet className="h-4 w-4" />
+        {isPending ? "Connecting..." : "Connect Wallet"}
+      </span>
     </button>
   );
 };
