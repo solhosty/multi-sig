@@ -2,6 +2,7 @@
 
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import type { WalletTransaction } from "@/lib/hooks/use-wallet-transactions";
 import { useMultisigActions } from "@/lib/hooks/use-multisig-actions";
 import { txExplorerUrl } from "@/lib/utils/explorer";
@@ -19,16 +20,16 @@ export const TransactionCard = ({ tx, walletAddress, owners, threshold }: Props)
   const { execute, sign, isPending } = useMultisigActions(walletAddress);
   const canExecute = tx.signatureCount >= threshold && !tx.executed;
   const statusClass = tx.executed
-    ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
-    : "bg-[hsl(var(--warning))]/14 text-[hsl(var(--warning))]";
+    ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/20"
+    : "bg-[hsl(var(--warning))]/14 text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]/20";
 
   return (
     <article className="panel space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold">Transaction #{tx.id.toString()}</h4>
-        <span className={`rounded-full px-2 py-1 text-xs ${statusClass}`}>
+        <Badge className={statusClass} variant="secondary">
           {tx.executed ? "executed" : "pending"}
-        </span>
+        </Badge>
       </div>
 
       <div className="surface-muted space-y-1 p-3 text-xs">
