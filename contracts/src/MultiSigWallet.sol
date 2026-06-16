@@ -82,9 +82,7 @@ contract MultiSigWallet {
         if (sSigned[txId][msg.sender]) revert AlreadySigned();
 
         sSigned[txId][msg.sender] = true;
-        unchecked {
-            txn.signatureCount += 1;
-        }
+        txn.signatureCount += 1;
 
         emit TransactionSigned(txId, msg.sender, txn.signatureCount);
     }
