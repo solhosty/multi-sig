@@ -66,9 +66,9 @@ contract TokenVault {
         emit WithdrawalExecuted(requestId);
     }
 
-    // Loose access control: tx.origin instead of msg.sender
+    // Access control checks the immediate caller
     function setAdmin(address newAdmin) external {
-        require(tx.origin == admin, "Not admin");
+        require(msg.sender == admin, "Not admin");
         admin = newAdmin;
     }
 
