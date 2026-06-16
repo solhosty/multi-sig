@@ -86,14 +86,37 @@ body {
 .btn-primary {
   border-radius: 0.875rem;
   background: linear-gradient(135deg, hsl(var(--accent)), rgba(28, 121, 255, 0.95));
+  background-size: 200% 100%;
+  background-position: 0% 50%;
   color: white;
   font-weight: 600;
-  transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease,
+    background-position 220ms ease;
 }
 
 .btn-primary:hover {
+  background-position: 100% 50%;
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(28, 121, 255, 0.34);
+  box-shadow: 0 10px 24px rgba(28, 121, 255, 0.34), 0 0 20px rgba(28, 121, 255, 0.25);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-secondary {

@@ -69,7 +69,7 @@ export default function WalletDashboardPage({ params }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Link className="btn-primary px-4 py-2 text-sm" href={`/wallets/${walletAddress}/send`}>
+          <Link className="btn-primary px-5 py-2.5 text-sm" href={`/wallets/${walletAddress}/send`}>
             Send / Sign / Execute
           </Link>
           <Link

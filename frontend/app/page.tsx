@@ -41,7 +41,7 @@ export default function HomePage() {
               collaborative flow built for daily operation.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link className="btn-primary px-5 py-3 text-sm" href="/wallets">
+              <Link className="btn-primary px-6 py-3.5 text-base" href="/wallets">
                 {isConnected ? "Open Your Wallets" : "Discover Wallets"}
               </Link>
               <Link className="btn-secondary px-5 py-3 text-sm" href="/wallets/new">

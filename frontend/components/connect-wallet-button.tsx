@@ -26,7 +26,7 @@ export const ConnectWalletButton = () => {
 
   return (
     <button
-      className="btn-primary px-4 py-2 text-sm"
+      className="btn-primary px-5 py-2.5 text-sm"
       disabled={isPending}
       onClick={() => connect({ connector })}
       type="button"

@@ -72,6 +72,14 @@ Wallet operations are route-scoped by address:
 - `/wallets/[walletAddress]/settings`
   - propose owner/threshold governance updates through self-targeted multi-sig txs
 
+## UI Polish
+
+- Unified primary actions under the shared `.btn-primary` class for consistent styling.
+- Standardized button sizing into a 3-tier hierarchy: hero, standard, and compact.
+- Enhanced hover feedback with a sliding accent gradient, stronger lift, and subtle glow.
+- Added keyboard-visible focus ring and active press interaction for better accessibility.
+- Centralized disabled behavior with reduced opacity and no pointer interactions.
+
 ## ETH Transfer Test Coverage
 
 - `contracts/test/MultiSigWallet.t.sol`

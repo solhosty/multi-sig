@@ -59,7 +59,7 @@ export const WalletsDiscoveryDashboard = () => {
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link className="btn-primary px-4 py-2 text-sm" href="/wallets/new">
+          <Link className="btn-primary px-5 py-2.5 text-sm" href="/wallets/new">
             Create New Wallet
           </Link>
           <Link className="btn-secondary px-4 py-2 text-sm" href="/wallets/import">
