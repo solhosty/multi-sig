@@ -1,10 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useReadContract, useReadContracts, useWriteContract } from "wagmi";
 
 import { factoryAbi } from "@/lib/contracts/factory-abi";
 import { contractConfig } from "@/lib/contracts/config";
+import { multisigAbi } from "@/lib/contracts/multisig-abi";
+
+const DISCOVERY_WALLET_LIMIT = 50;
+const FACTORY_REFETCH_INTERVAL_MS = 30_000;
 
 export const useFactory = () => {
   const { address } = useAccount();
@@ -19,7 +23,7 @@ export const useFactory = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: canRead && Boolean(address),
-      refetchInterval: 5_000
+      refetchInterval: FACTORY_REFETCH_INTERVAL_MS
     }
   });
 
@@ -30,21 +34,62 @@ export const useFactory = () => {
     args: address ? [address] : undefined,
     query: {
       enabled: canRead && Boolean(address),
-      refetchInterval: 5_000
+      refetchInterval: FACTORY_REFETCH_INTERVAL_MS
     }
   });
 
-  const ownedWallets = useMemo(() => {
+  const candidateWallets = useMemo(() => {
     const normalized = new Map<string, `0x${string}`>();
-    const ownerList = (ownerWallets.data ?? []) as `0x${string}`[];
-    const creatorList = (creatorWallets.data ?? []) as `0x${string}`[];
+    const ownerList = ((ownerWallets.data ?? []) as `0x${string}`[]).slice(0, DISCOVERY_WALLET_LIMIT);
+    const creatorList = ((creatorWallets.data ?? []) as `0x${string}`[]).slice(
+      0,
+      DISCOVERY_WALLET_LIMIT
+    );
 
     for (const wallet of [...ownerList, ...creatorList]) {
       normalized.set(wallet.toLowerCase(), wallet);
+
+      if (normalized.size >= DISCOVERY_WALLET_LIMIT) {
+        break;
+      }
     }
 
     return Array.from(normalized.values());
   }, [creatorWallets.data, ownerWallets.data]);
+
+  const ownershipValidation = useReadContracts({
+    contracts: address
+      ? candidateWallets.map((walletAddress) => ({
+          abi: multisigAbi,
+          address: walletAddress,
+          functionName: "isOwner" as const,
+          args: [address]
+        }))
+      : [],
+    query: {
+      enabled: canRead && Boolean(address) && candidateWallets.length > 0,
+      refetchInterval: FACTORY_REFETCH_INTERVAL_MS
+    }
+  });
+
+  const ownedWallets = useMemo(() => {
+    if (!ownershipValidation.data) {
+      return [];
+    }
+
+    return ownershipValidation.data.flatMap((validation, index) => {
+      if (
+        validation.status !== "success" ||
+        typeof validation.result !== "boolean" ||
+        !validation.result
+      ) {
+        return [];
+      }
+
+      const walletAddress = candidateWallets[index];
+      return walletAddress ? [walletAddress] : [];
+    });
+  }, [candidateWallets, ownershipValidation.data]);
 
   const createWallet = async (owners: `0x${string}`[], threshold: bigint) => {
     if (!contractConfig.factoryAddress) {
@@ -64,7 +109,8 @@ export const useFactory = () => {
     creatorWallets,
     ownerWallets,
     ownedWallets,
-    isLoadingWallets: creatorWallets.isLoading || ownerWallets.isLoading,
+    isLoadingWallets:
+      creatorWallets.isLoading || ownerWallets.isLoading || ownershipValidation.isLoading,
     isCreating: isPending
   };
 };

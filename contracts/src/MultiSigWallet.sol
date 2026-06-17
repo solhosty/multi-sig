@@ -41,6 +41,8 @@ contract MultiSigWallet {
 
     Transaction[] private sTransactions;
     mapping(uint256 => mapping(address => bool)) private sSigned;
+    mapping(uint256 => address[]) private sTxSigners;
+    mapping(uint256 => mapping(address => bool)) private sSignerRecorded;
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -82,6 +84,10 @@ contract MultiSigWallet {
         if (sSigned[txId][msg.sender]) revert AlreadySigned();
 
         sSigned[txId][msg.sender] = true;
+        if (!sSignerRecorded[txId][msg.sender]) {
+            sSignerRecorded[txId][msg.sender] = true;
+            sTxSigners[txId].push(msg.sender);
+        }
         unchecked {
             txn.signatureCount += 1;
         }
@@ -95,6 +101,9 @@ contract MultiSigWallet {
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
+
+        uint256 validSignatures = _countValidSignatures(txId);
+        if (validSignatures < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
         (bool success, ) = txn.to.call{value: txn.value}(txn.data);
@@ -130,6 +139,21 @@ contract MultiSigWallet {
             uint256 oldThreshold = threshold;
             threshold = sOwners.length;
             emit ThresholdUpdated(oldThreshold, threshold);
+        }
+
+        uint256 txCount = sTransactions.length;
+        for (uint256 txId = 0; txId < txCount; txId++) {
+            Transaction storage txn = sTransactions[txId];
+            if (txn.executed || !sSigned[txId][oldOwner]) {
+                continue;
+            }
+
+            sSigned[txId][oldOwner] = false;
+            if (txn.signatureCount > 0) {
+                unchecked {
+                    txn.signatureCount -= 1;
+                }
+            }
         }
 
         emit OwnerRemoved(oldOwner);
@@ -191,5 +215,19 @@ contract MultiSigWallet {
 
     function _onlySelf() internal view {
         if (msg.sender != address(this)) revert OnlySelf();
+    }
+
+    function _countValidSignatures(uint256 txId) internal view returns (uint256 validSignatures) {
+        address[] storage signers = sTxSigners[txId];
+        uint256 signersLength = signers.length;
+
+        for (uint256 i = 0; i < signersLength; i++) {
+            address signer = signers[i];
+            if (sSigned[txId][signer] && isOwner[signer]) {
+                unchecked {
+                    validSignatures += 1;
+                }
+            }
+        }
     }
 }
