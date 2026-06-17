@@ -12,6 +12,7 @@ export type WalletTransaction = {
   data: `0x${string}`;
   executed: boolean;
   signatureCount: bigint;
+  configNonce: bigint;
 };
 
 export const useWalletTransactions = (walletAddress: `0x${string}`) => {
@@ -55,15 +56,16 @@ export const useWalletTransactions = (walletAddress: `0x${string}`) => {
       }
 
       const result = item.result;
-      if (!Array.isArray(result) || result.length !== 5) {
+      if (!Array.isArray(result) || result.length !== 6) {
         return [];
       }
 
-      const [to, value, data, executed, signatureCount] = result as [
+      const [to, value, data, executed, signatureCount, configNonce] = result as [
         `0x${string}`,
         bigint,
         `0x${string}`,
         boolean,
+        bigint,
         bigint
       ];
       return [
@@ -73,7 +75,8 @@ export const useWalletTransactions = (walletAddress: `0x${string}`) => {
           value,
           data,
           executed,
-          signatureCount
+          signatureCount,
+          configNonce
         }
       ];
     });
