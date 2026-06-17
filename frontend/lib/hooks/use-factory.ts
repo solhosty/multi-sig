@@ -1,20 +1,26 @@
 "use client";
 
 import { useMemo } from "react";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useChainId, useReadContract, useWriteContract } from "wagmi";
 
 import { factoryAbi } from "@/lib/contracts/factory-abi";
-import { contractConfig } from "@/lib/contracts/config";
+import { appChain, contractConfig } from "@/lib/contracts/config";
 
 export const useFactory = () => {
   const { address } = useAccount();
+  const chainId = useChainId();
   const { writeContractAsync, isPending } = useWriteContract();
+  const isExpectedChain = chainId === appChain.id;
 
-  const canRead = useMemo(() => Boolean(contractConfig.factoryAddress), []);
+  const canRead = useMemo(
+    () => Boolean(contractConfig.factoryAddress) && isExpectedChain,
+    [isExpectedChain]
+  );
 
   const creatorWallets = useReadContract({
     abi: factoryAbi,
     address: contractConfig.factoryAddress,
+    chainId: appChain.id,
     functionName: "getWalletsByCreator",
     args: address ? [address] : undefined,
     query: {
@@ -26,6 +32,7 @@ export const useFactory = () => {
   const ownerWallets = useReadContract({
     abi: factoryAbi,
     address: contractConfig.factoryAddress,
+    chainId: appChain.id,
     functionName: "getWalletsByOwner",
     args: address ? [address] : undefined,
     query: {
@@ -51,9 +58,14 @@ export const useFactory = () => {
       throw new Error("Factory address is not configured");
     }
 
+    if (!isExpectedChain) {
+      throw new Error(`Wrong network. Switch to ${appChain.name} before creating a wallet.`);
+    }
+
     return writeContractAsync({
       abi: factoryAbi,
       address: contractConfig.factoryAddress,
+      chainId: appChain.id,
       functionName: "createWallet",
       args: [owners, threshold]
     });
@@ -65,6 +77,7 @@ export const useFactory = () => {
     ownerWallets,
     ownedWallets,
     isLoadingWallets: creatorWallets.isLoading || ownerWallets.isLoading,
-    isCreating: isPending
+    isCreating: isPending,
+    isWrongNetwork: !isExpectedChain
   };
 };

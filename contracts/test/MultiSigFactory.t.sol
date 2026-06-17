@@ -31,15 +31,15 @@ contract MultiSigFactoryTest is Test {
         vm.prank(secondCreator);
         address walletTwo = factory.createWallet(owners, 2);
 
-        address[] memory creatorWallets = factory.getWalletsByCreator(creator);
+        address[] memory creatorWallets = factory.getWalletsByCreator(creator, 0, 10);
         assertEq(creatorWallets.length, 1);
         assertEq(creatorWallets[0], walletOne);
 
-        address[] memory secondCreatorWallets = factory.getWalletsByCreator(secondCreator);
+        address[] memory secondCreatorWallets = factory.getWalletsByCreator(secondCreator, 0, 10);
         assertEq(secondCreatorWallets.length, 1);
         assertEq(secondCreatorWallets[0], walletTwo);
 
-        address[] memory ownerWallets = factory.getWalletsByOwner(ownerA);
+        address[] memory ownerWallets = factory.getWalletsByOwner(ownerA, 0, 10);
         assertEq(ownerWallets.length, 2);
         assertEq(ownerWallets[0], walletOne);
         assertEq(ownerWallets[1], walletTwo);
@@ -99,5 +99,35 @@ contract MultiSigFactoryTest is Test {
         assertFalse(walletOne.hasSigned(oneTx, ownerC));
         assertTrue(walletTwo.hasSigned(twoTx, ownerC));
         assertFalse(walletTwo.hasSigned(twoTx, ownerA));
+    }
+
+    function testWalletGettersArePaginated() public {
+        address[] memory owners = new address[](2);
+        owners[0] = ownerA;
+        owners[1] = ownerB;
+
+        vm.prank(creator);
+        address walletOne = factory.createWallet(owners, 2);
+
+        vm.prank(creator);
+        address walletTwo = factory.createWallet(owners, 2);
+
+        address[] memory allWallets = factory.getAllWallets(0, 1);
+        assertEq(allWallets.length, 1);
+        assertEq(allWallets[0], walletOne);
+
+        address[] memory nextWallets = factory.getAllWallets(1, 10);
+        assertEq(nextWallets.length, 1);
+        assertEq(nextWallets[0], walletTwo);
+
+        address[] memory noWallets = factory.getAllWallets(5, 10);
+        assertEq(noWallets.length, 0);
+
+        address[] memory ownerSlice = factory.getWalletsByOwner(ownerA, 1, 5);
+        assertEq(ownerSlice.length, 1);
+        assertEq(ownerSlice[0], walletTwo);
+
+        address[] memory emptyOwnerSlice = factory.getWalletsByOwner(ownerA, 2, 5);
+        assertEq(emptyOwnerSlice.length, 0);
     }
 }

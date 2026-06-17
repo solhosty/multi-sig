@@ -8,19 +8,20 @@ import { toast } from "sonner";
 
 import { ShareWalletLink } from "@/components/share-wallet-link";
 import { factoryAbi } from "@/lib/contracts/factory-abi";
+import { appChain } from "@/lib/contracts/config";
 import { useFactory } from "@/lib/hooks/use-factory";
 
 export const CreateWalletForm = () => {
   const router = useRouter();
   const { address } = useAccount();
-  const { createWallet, isCreating } = useFactory();
+  const { createWallet, isCreating, isWrongNetwork } = useFactory();
 
   const [ownersInput, setOwnersInput] = useState("");
   const [thresholdInput, setThresholdInput] = useState("2");
   const [walletAddress, setWalletAddress] = useState<`0x${string}` | null>(null);
   const [hash, setHash] = useState<`0x${string}` | null>(null);
 
-  const receiptQuery = useWaitForTransactionReceipt({ hash: hash ?? undefined });
+  const receiptQuery = useWaitForTransactionReceipt({ hash: hash ?? undefined, chainId: appChain.id });
 
   const owners = useMemo(() => {
     const raw = ownersInput
@@ -39,6 +40,11 @@ export const CreateWalletForm = () => {
 
     if (owners.length === 0) {
       toast.error("Add at least one owner address");
+      return;
+    }
+
+    if (isWrongNetwork) {
+      toast.error(`Wrong network. Switch your wallet to ${appChain.name} and retry.`);
       return;
     }
 
@@ -78,6 +84,12 @@ export const CreateWalletForm = () => {
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Enter collaborators, threshold, and deploy through factory
         </p>
+        {isWrongNetwork ? (
+          <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+            Wrong network detected. Please switch to {appChain.name} (chain ID {appChain.id}) to
+            deploy a wallet.
+          </p>
+        ) : null}
         <label className="block text-sm font-medium">Additional Owners (comma separated)</label>
         <textarea
           className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent p-3"
@@ -96,7 +108,7 @@ export const CreateWalletForm = () => {
         />
         <button
           className="rounded-md bg-[hsl(var(--accent))] px-4 py-2 text-sm font-semibold text-white"
-          disabled={isCreating || receiptQuery.isLoading}
+          disabled={isCreating || receiptQuery.isLoading || isWrongNetwork}
           type="submit"
         >
           {isCreating || receiptQuery.isLoading ? "Deploying..." : "Deploy Wallet"}
