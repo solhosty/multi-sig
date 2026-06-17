@@ -117,6 +117,20 @@ contract MultiSigWallet {
         if (!isOwner[oldOwner]) revert InvalidOwner();
 
         isOwner[oldOwner] = false;
+
+        uint256 transactionsLength = sTransactions.length;
+        for (uint256 txId = 0; txId < transactionsLength; txId++) {
+            Transaction storage txn = sTransactions[txId];
+            if (txn.executed || !sSigned[txId][oldOwner]) {
+                continue;
+            }
+
+            sSigned[txId][oldOwner] = false;
+            unchecked {
+                txn.signatureCount -= 1;
+            }
+        }
+
         uint256 length = sOwners.length;
         for (uint256 i = 0; i < length; i++) {
             if (sOwners[i] == oldOwner) {
