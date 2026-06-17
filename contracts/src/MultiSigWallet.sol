@@ -126,6 +126,8 @@ contract MultiSigWallet {
             }
         }
 
+        _clearPendingSignatures(oldOwner);
+
         if (threshold > sOwners.length) {
             uint256 oldThreshold = threshold;
             threshold = sOwners.length;
@@ -183,6 +185,21 @@ contract MultiSigWallet {
     function _setThreshold(uint256 threshold_) private {
         if (threshold_ == 0 || threshold_ > sOwners.length) revert InvalidThreshold();
         threshold = threshold_;
+    }
+
+    function _clearPendingSignatures(address oldOwner) private {
+        uint256 txCount = sTransactions.length;
+        for (uint256 txId = 0; txId < txCount; txId++) {
+            Transaction storage txn = sTransactions[txId];
+            if (txn.executed || !sSigned[txId][oldOwner]) {
+                continue;
+            }
+
+            sSigned[txId][oldOwner] = false;
+            if (txn.signatureCount > 0) {
+                txn.signatureCount -= 1;
+            }
+        }
     }
 
     function _onlyOwner() internal view {

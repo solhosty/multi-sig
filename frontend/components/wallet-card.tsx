@@ -54,9 +54,11 @@ export const WalletCard = ({ walletAddress }: Props) => {
         <Link className="btn-primary px-3 py-2 text-xs" href={`/wallets/${walletAddress}/dashboard`}>
           Open Dashboard
         </Link>
-        <Link className="btn-secondary px-3 py-2 text-xs" href={`/wallets/${walletAddress}/send`}>
-          Send Flow
-        </Link>
+        {isOwner ? (
+          <Link className="btn-secondary px-3 py-2 text-xs" href={`/wallets/${walletAddress}/send`}>
+            Send Flow
+          </Link>
+        ) : null}
       </div>
     </article>
   );

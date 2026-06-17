@@ -15,6 +15,13 @@ export const multisigAbi = [
   },
   {
     type: "function",
+    name: "isOwner",
+    stateMutability: "view",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ name: "", type: "bool" }]
+  },
+  {
+    type: "function",
     name: "getTransactionCount",
     stateMutability: "view",
     inputs: [],
