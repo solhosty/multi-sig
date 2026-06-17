@@ -9,6 +9,7 @@ contract MultiSigWallet {
     error OwnerExists();
     error TxDoesNotExist();
     error AlreadySigned();
+    error NotSigned();
     error AlreadyExecuted();
     error NotEnoughSignatures();
     error ExecutionFailed();
@@ -94,6 +95,7 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
+        if (!sSigned[txId][msg.sender]) revert NotSigned();
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
