@@ -31,6 +31,13 @@ export const factoryAbi = [
     outputs: [{ name: "", type: "address[]" }]
   },
   {
+    type: "function",
+    name: "isWallet",
+    stateMutability: "view",
+    inputs: [{ name: "wallet", type: "address" }],
+    outputs: [{ name: "", type: "bool" }]
+  },
+  {
     type: "event",
     name: "WalletCreated",
     inputs: [

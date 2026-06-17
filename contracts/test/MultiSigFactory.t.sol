@@ -100,4 +100,16 @@ contract MultiSigFactoryTest is Test {
         assertTrue(walletTwo.hasSigned(twoTx, ownerC));
         assertFalse(walletTwo.hasSigned(twoTx, ownerA));
     }
+
+    function testIsWalletReturnsTrueForFactoryWalletsOnly() public {
+        address[] memory owners = new address[](2);
+        owners[0] = ownerA;
+        owners[1] = ownerB;
+
+        vm.prank(creator);
+        address walletAddress = factory.createWallet(owners, 2);
+
+        assertTrue(factory.isWallet(walletAddress));
+        assertFalse(factory.isWallet(receiverOne));
+    }
 }

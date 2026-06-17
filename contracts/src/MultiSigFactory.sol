@@ -14,6 +14,7 @@ contract MultiSigFactory {
     address[] private sAllWallets;
     mapping(address => address[]) private sWalletsByCreator;
     mapping(address => address[]) private sWalletsByOwner;
+    mapping(address => bool) private sIsWallet;
 
     function createWallet(
         address[] calldata owners,
@@ -23,6 +24,7 @@ contract MultiSigFactory {
         walletAddress = address(wallet);
 
         sAllWallets.push(walletAddress);
+        sIsWallet[walletAddress] = true;
         sWalletsByCreator[msg.sender].push(walletAddress);
 
         for (uint256 i = 0; i < owners.length; i++) {
@@ -46,5 +48,9 @@ contract MultiSigFactory {
 
     function getWalletCount() external view returns (uint256) {
         return sAllWallets.length;
+    }
+
+    function isWallet(address wallet) external view returns (bool) {
+        return sIsWallet[wallet];
     }
 }
