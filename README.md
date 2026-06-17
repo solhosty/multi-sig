@@ -72,6 +72,11 @@ Wallet operations are route-scoped by address:
 - `/wallets/[walletAddress]/settings`
   - propose owner/threshold governance updates through self-targeted multi-sig txs
 
+## Brand & Theming
+
+The primary accent color is violet (`#8b5cf6`) across the frontend theme.
+Apply this accent to primary action buttons, focus rings, selection highlights, and ambient background gradients.
+
 ## ETH Transfer Test Coverage
 
 - `contracts/test/MultiSigWallet.t.sol`
