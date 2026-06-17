@@ -18,6 +18,13 @@ export const factoryAbi = [
   },
   {
     type: "function",
+    name: "getAllWallets",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address[]" }]
+  },
+  {
+    type: "function",
     name: "getWalletsByCreator",
     stateMutability: "view",
     inputs: [{ name: "creator", type: "address" }],
