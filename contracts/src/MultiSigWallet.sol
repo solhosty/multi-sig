@@ -19,6 +19,7 @@ contract MultiSigWallet {
         bytes data;
         bool executed;
         uint256 signatureCount;
+        uint256 configVersion;
     }
 
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
@@ -38,9 +39,10 @@ contract MultiSigWallet {
     address[] private sOwners;
     mapping(address => bool) public isOwner;
     uint256 public threshold;
+    uint256 private sConfigVersion;
 
     Transaction[] private sTransactions;
-    mapping(uint256 => mapping(address => bool)) private sSigned;
+    mapping(uint256 => mapping(address => uint256)) private sSignedAtVersion;
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -55,6 +57,7 @@ contract MultiSigWallet {
     constructor(address[] memory owners_, uint256 threshold_) {
         _setOwners(owners_);
         _setThreshold(threshold_);
+        sConfigVersion = 1;
     }
 
     receive() external payable {
@@ -68,7 +71,14 @@ contract MultiSigWallet {
     ) external onlyOwner returns (uint256 txId) {
         txId = sTransactions.length;
         sTransactions.push(
-            Transaction({to: to, value: value, data: data, executed: false, signatureCount: 0})
+            Transaction({
+                to: to,
+                value: value,
+                data: data,
+                executed: false,
+                signatureCount: 0,
+                configVersion: sConfigVersion
+            })
         );
 
         emit TransactionSubmitted(txId, msg.sender, to, value, data);
@@ -79,9 +89,15 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (sSigned[txId][msg.sender]) revert AlreadySigned();
 
-        sSigned[txId][msg.sender] = true;
+        if (txn.configVersion != sConfigVersion) {
+            txn.configVersion = sConfigVersion;
+            txn.signatureCount = 0;
+        }
+
+        if (sSignedAtVersion[txId][msg.sender] == txn.configVersion) revert AlreadySigned();
+
+        sSignedAtVersion[txId][msg.sender] = txn.configVersion;
         unchecked {
             txn.signatureCount += 1;
         }
@@ -94,6 +110,7 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
+        if (txn.configVersion != sConfigVersion) revert NotEnoughSignatures();
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
@@ -109,6 +126,7 @@ contract MultiSigWallet {
 
         isOwner[newOwner] = true;
         sOwners.push(newOwner);
+        _bumpConfigVersion();
 
         emit OwnerAdded(newOwner);
     }
@@ -126,6 +144,8 @@ contract MultiSigWallet {
             }
         }
 
+        _bumpConfigVersion();
+
         if (threshold > sOwners.length) {
             uint256 oldThreshold = threshold;
             threshold = sOwners.length;
@@ -138,6 +158,9 @@ contract MultiSigWallet {
     function updateThreshold(uint256 newThreshold) external onlySelf {
         uint256 oldThreshold = threshold;
         _setThreshold(newThreshold);
+        if (oldThreshold != threshold) {
+            _bumpConfigVersion();
+        }
         emit ThresholdUpdated(oldThreshold, threshold);
     }
 
@@ -163,7 +186,7 @@ contract MultiSigWallet {
 
     function hasSigned(uint256 txId, address owner) external view returns (bool) {
         if (txId >= sTransactions.length) revert TxDoesNotExist();
-        return sSigned[txId][owner];
+        return sSignedAtVersion[txId][owner] == sTransactions[txId].configVersion;
     }
 
     function _setOwners(address[] memory owners_) private {
@@ -183,6 +206,12 @@ contract MultiSigWallet {
     function _setThreshold(uint256 threshold_) private {
         if (threshold_ == 0 || threshold_ > sOwners.length) revert InvalidThreshold();
         threshold = threshold_;
+    }
+
+    function _bumpConfigVersion() private {
+        unchecked {
+            sConfigVersion += 1;
+        }
     }
 
     function _onlyOwner() internal view {
