@@ -19,6 +19,7 @@ contract MultiSigWallet {
         bytes data;
         bool executed;
         uint256 signatureCount;
+        uint256 ownerSetNonce;
     }
 
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
@@ -38,9 +39,10 @@ contract MultiSigWallet {
     address[] private sOwners;
     mapping(address => bool) public isOwner;
     uint256 public threshold;
+    uint256 public ownerSetNonce = 1;
 
     Transaction[] private sTransactions;
-    mapping(uint256 => mapping(address => bool)) private sSigned;
+    mapping(uint256 => mapping(address => uint256)) private sSigned;
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -68,7 +70,14 @@ contract MultiSigWallet {
     ) external onlyOwner returns (uint256 txId) {
         txId = sTransactions.length;
         sTransactions.push(
-            Transaction({to: to, value: value, data: data, executed: false, signatureCount: 0})
+            Transaction({
+                to: to,
+                value: value,
+                data: data,
+                executed: false,
+                signatureCount: 0,
+                ownerSetNonce: ownerSetNonce
+            })
         );
 
         emit TransactionSubmitted(txId, msg.sender, to, value, data);
@@ -79,9 +88,16 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
-        if (sSigned[txId][msg.sender]) revert AlreadySigned();
 
-        sSigned[txId][msg.sender] = true;
+        uint256 currentOwnerSetNonce = ownerSetNonce;
+        if (txn.ownerSetNonce != currentOwnerSetNonce) {
+            txn.ownerSetNonce = currentOwnerSetNonce;
+            txn.signatureCount = 0;
+        }
+
+        if (sSigned[txId][msg.sender] == currentOwnerSetNonce) revert AlreadySigned();
+
+        sSigned[txId][msg.sender] = currentOwnerSetNonce;
         unchecked {
             txn.signatureCount += 1;
         }
@@ -94,6 +110,7 @@ contract MultiSigWallet {
 
         Transaction storage txn = sTransactions[txId];
         if (txn.executed) revert AlreadyExecuted();
+        if (txn.ownerSetNonce != ownerSetNonce) revert NotEnoughSignatures();
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
@@ -109,6 +126,9 @@ contract MultiSigWallet {
 
         isOwner[newOwner] = true;
         sOwners.push(newOwner);
+        unchecked {
+            ownerSetNonce += 1;
+        }
 
         emit OwnerAdded(newOwner);
     }
@@ -116,6 +136,7 @@ contract MultiSigWallet {
     function removeOwner(address oldOwner) external onlySelf {
         if (!isOwner[oldOwner]) revert InvalidOwner();
 
+        uint256 currentOwnerSetNonce = ownerSetNonce;
         isOwner[oldOwner] = false;
         uint256 length = sOwners.length;
         for (uint256 i = 0; i < length; i++) {
@@ -124,6 +145,22 @@ contract MultiSigWallet {
                 sOwners.pop();
                 break;
             }
+        }
+
+        uint256 txCount = sTransactions.length;
+        for (uint256 txId = 0; txId < txCount; txId++) {
+            Transaction storage txn = sTransactions[txId];
+            if (txn.executed || txn.ownerSetNonce != currentOwnerSetNonce) continue;
+            if (sSigned[txId][oldOwner] != currentOwnerSetNonce) continue;
+
+            sSigned[txId][oldOwner] = 0;
+            unchecked {
+                txn.signatureCount -= 1;
+            }
+        }
+
+        unchecked {
+            ownerSetNonce += 1;
         }
 
         if (threshold > sOwners.length) {
@@ -163,7 +200,10 @@ contract MultiSigWallet {
 
     function hasSigned(uint256 txId, address owner) external view returns (bool) {
         if (txId >= sTransactions.length) revert TxDoesNotExist();
-        return sSigned[txId][owner];
+
+        Transaction storage txn = sTransactions[txId];
+        uint256 txOwnerSetNonce = txn.ownerSetNonce;
+        return txOwnerSetNonce == ownerSetNonce && sSigned[txId][owner] == txOwnerSetNonce;
     }
 
     function _setOwners(address[] memory owners_) private {
