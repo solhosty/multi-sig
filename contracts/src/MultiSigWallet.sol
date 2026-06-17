@@ -97,8 +97,10 @@ contract MultiSigWallet {
         if (txn.signatureCount < threshold) revert NotEnoughSignatures();
 
         txn.executed = true;
-        (bool success, ) = txn.to.call{value: txn.value}(txn.data);
-        if (!success) revert ExecutionFailed();
+        (bool success, bytes memory returnData) = txn.to.call{value: txn.value}(txn.data);
+        if (!success || (returnData.length != 0 && !abi.decode(returnData, (bool)))) {
+            revert ExecutionFailed();
+        }
 
         emit TransactionExecuted(txId, msg.sender);
     }
